@@ -6,6 +6,8 @@ import { MilitaryForces } from '@/components/scenarios/MilitaryForces';
 import { LeaderBubbles } from '@/components/command-center/LeaderBubbles';
 import { EvidenceDrawer } from '@/components/command-center/EvidenceDrawer';
 import { TheaterMap } from '@/components/command-center/TheaterMap';
+import { LanguageSwitcher } from '@/components/LanguageSwitcher';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
 import { ScenarioScore } from '@/types/scenario';
 import { useState, useEffect } from 'react';
 
@@ -57,6 +59,7 @@ function calculateCountryAggression(scenarios: ScenarioWithMetadata[]): CountryA
 type FeedFilter = 'all' | 'military' | 'politics' | 'energy' | 'cyber';
 
 export default function CommandCenterPage() {
+  const { t } = useLanguage();
   const [currentTime, setCurrentTime] = useState(new Date());
   const [feedFilter, setFeedFilter] = useState<FeedFilter>('all');
   const [evidenceDrawer, setEvidenceDrawer] = useState<{
@@ -125,11 +128,12 @@ export default function CommandCenterPage() {
     return (
       <>
         <Navigation />
+        <LanguageSwitcher />
         <div className="min-h-screen bg-black flex items-center justify-center">
           <div className="text-green-400 font-mono text-center space-y-4 animate-pulse">
             <div className="text-6xl font-bold mb-8">⬡</div>
-            <div className="text-2xl tracking-widest">INITIALIZING COMMAND CENTER</div>
-            <div className="text-sm opacity-60">ESTABLISHING TACTICAL LINKS...</div>
+            <div className="text-2xl tracking-widest">{t('cc.loading')}</div>
+            <div className="text-sm opacity-60">{t('cc.initializing')}</div>
           </div>
         </div>
       </>
@@ -139,6 +143,7 @@ export default function CommandCenterPage() {
   return (
     <>
       <Navigation />
+      <LanguageSwitcher />
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 text-green-400">
         {/* Scan lines */}
         <div className="fixed inset-0 bg-gradient-to-b from-transparent via-green-900/5 to-transparent pointer-events-none animate-scan" />
