@@ -13,22 +13,28 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>('en');
+  const [mounted, setMounted] = useState(false);
 
   // Load locale from localStorage on mount
   useEffect(() => {
-    const savedLocale = localStorage.getItem('locale') as Locale;
-    if (savedLocale && (savedLocale === 'en' || savedLocale === 'fr')) {
-      setLocaleState(savedLocale);
+    setMounted(true);
+    if (typeof window !== 'undefined') {
+      const savedLocale = localStorage.getItem('locale') as Locale;
+      if (savedLocale && (savedLocale === 'en' || savedLocale === 'fr')) {
+        setLocaleState(savedLocale);
+      }
     }
   }, []);
 
   const setLocale = (newLocale: Locale) => {
     setLocaleState(newLocale);
-    localStorage.setItem('locale', newLocale);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('locale', newLocale);
+    }
   };
 
   const t = (key: TranslationKey): string => {
-    return translations[locale][key] || key;
+    return translations[locale]?.[key] || key;
   };
 
   return (
