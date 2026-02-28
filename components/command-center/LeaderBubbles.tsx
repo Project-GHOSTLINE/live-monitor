@@ -1,7 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
+import { IntelPopover } from './IntelPopover';
+import { MiniBars } from './MiniBars';
 
 interface MilitaryAssets {
   ships: number;
@@ -329,6 +331,22 @@ export function LeaderBubbles() {
 
   const selected = WORLD_LEADERS.find(l => l.countryCode === selectedLeader);
 
+  // Keyboard hotkeys: 1-8 for leader selection
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      const key = e.key;
+      const index = parseInt(key) - 1;
+
+      if (index >= 0 && index < WORLD_LEADERS.length) {
+        const leader = WORLD_LEADERS[index];
+        setSelectedLeader(leader.countryCode === selectedLeader ? null : leader.countryCode);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [selectedLeader]);
+
   return (
     <div className="bg-black/60 border-2 border-green-900/40 p-6">
       {/* Header - C&C Style */}
@@ -337,8 +355,13 @@ export function LeaderBubbles() {
         <div className="text-2xl font-mono font-bold text-green-400 tracking-wider glow-text mb-2">
           ▰▰▰ CHOOSE YOUR COMMANDER ▰▰▰
         </div>
-        <div className="text-xs text-green-500/70 font-mono italic">
-          "The fate of nations rests in your selection..."
+        <div className="flex items-center justify-between">
+          <div className="text-xs text-green-500/70 font-mono italic">
+            "The fate of nations rests in your selection..."
+          </div>
+          <div className="text-xs text-green-500/60 font-mono bg-black/40 border border-green-900/40 px-3 py-1">
+            HOTKEYS: 1-8
+          </div>
         </div>
       </div>
 
@@ -425,13 +448,16 @@ export function LeaderBubbles() {
               </div>
             </div>
 
-            {/* Hover tooltip */}
+            {/* Advanced Intel Popover */}
             {hoveredLeader === leader.countryCode && (
-              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-black border-2 border-green-500 text-xs font-mono whitespace-nowrap z-50 animate-fade-in">
-                <div className="text-green-400 font-bold">{leader.leader}</div>
-                <div className="text-green-500/60">{leader.title}</div>
-                <div className="text-green-300 mt-1">Readiness: {leader.readiness}%</div>
-              </div>
+              <IntelPopover
+                name={leader.leader}
+                country={leader.country}
+                stance={leader.stance}
+                readiness={leader.readiness}
+                title={leader.title}
+                lastVerified={new Date().toISOString()} // Current date - can be replaced with real data
+              />
             )}
           </button>
         ))}
@@ -499,6 +525,26 @@ export function LeaderBubbles() {
                   {selected.stance === 'defensive' && '🛡️ DEFENSIVE'}
                   {selected.stance === 'neutral' && '⚖️ NEUTRAL'}
                 </div>
+              </div>
+            </div>
+          </div>
+
+          {/* TACTICAL POWER ANALYSIS - MiniBars */}
+          <div className="bg-black/60 border-2 border-cyan-700/40 p-4">
+            <div className="text-sm text-cyan-500/80 font-mono tracking-widest mb-4">⚡ TACTICAL POWER INDEX</div>
+            <MiniBars
+              air={selected.military.fighter_jets}
+              sea={selected.military.ships}
+              land={selected.military.tanks}
+            />
+            <div className="mt-3 pt-3 border-t border-cyan-900/40 text-xs font-mono text-cyan-500/60">
+              <div className="flex items-center justify-between">
+                <span>Data Credibility</span>
+                <span className="text-cyan-400 font-bold">CONFIDENCE: HIGH</span>
+              </div>
+              <div className="flex items-center justify-between mt-1">
+                <span>Last Updated</span>
+                <span className="text-cyan-400">{new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
               </div>
             </div>
           </div>

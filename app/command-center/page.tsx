@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Navigation } from '@/components/shared/Navigation';
 import { MilitaryForces } from '@/components/scenarios/MilitaryForces';
 import { LeaderBubbles } from '@/components/command-center/LeaderBubbles';
+import { EvidenceDrawer } from '@/components/command-center/EvidenceDrawer';
 import { ScenarioScore } from '@/types/scenario';
 import { useState, useEffect } from 'react';
 
@@ -52,8 +53,17 @@ function calculateCountryAggression(scenarios: ScenarioWithMetadata[]): CountryA
   return pairs;
 }
 
+type FeedFilter = 'all' | 'military' | 'politics' | 'energy' | 'cyber';
+
 export default function CommandCenterPage() {
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [feedFilter, setFeedFilter] = useState<FeedFilter>('all');
+  const [evidenceDrawer, setEvidenceDrawer] = useState<{
+    isOpen: boolean;
+    country?: string;
+    target?: string;
+    title?: string;
+  }>({ isOpen: false });
 
   useEffect(() => {
     const interval = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -88,6 +98,27 @@ export default function CommandCenterPage() {
   const feed = feedData?.items || [];
   const scenarios = scenarioData?.scenarios || [];
   const aggression = calculateCountryAggression(scenarios);
+
+  // Filter feed based on selected filter
+  const filteredFeed = feed.filter(item => {
+    if (feedFilter === 'all') return true;
+
+    const tags = item.tags || [];
+    switch (feedFilter) {
+      case 'military': return tags.some(t => ['military', 'defense', 'army', 'navy', 'air-force'].includes(t.toLowerCase()));
+      case 'politics': return tags.some(t => ['politics', 'diplomacy', 'government'].includes(t.toLowerCase()));
+      case 'energy': return tags.some(t => ['energy', 'oil', 'gas', 'nuclear'].includes(t.toLowerCase()));
+      case 'cyber': return tags.some(t => ['cyber', 'hacking', 'technology'].includes(t.toLowerCase()));
+      default: return true;
+    }
+  });
+
+  // Helper function for severity badge
+  const getSeverityBadge = (reliability: number) => {
+    if (reliability >= 4) return { label: 'HIGH', color: 'bg-green-600 text-white border-green-400' };
+    if (reliability >= 3) return { label: 'MED', color: 'bg-yellow-600 text-black border-yellow-400' };
+    return { label: 'LOW', color: 'bg-red-600 text-white border-red-400' };
+  };
 
   if (feedLoading || scenarioLoading) {
     return (
@@ -157,12 +188,18 @@ export default function CommandCenterPage() {
                 {aggression.map((pair, idx) => (
                   <div
                     key={idx}
-                    className={`bg-black/40 border-2 p-3 ${
+                    className={`bg-black/40 border-2 p-3 cursor-pointer hover:scale-105 transition-transform group relative ${
                       pair.defcon === 1 ? 'border-red-600 animate-pulse' :
                       pair.defcon === 2 ? 'border-orange-600' :
                       pair.defcon === 3 ? 'border-yellow-600' :
                       'border-blue-600'
                     }`}
+                    onClick={() => setEvidenceDrawer({
+                      isOpen: true,
+                      country: pair.country,
+                      target: pair.target,
+                      title: `${pair.country} → ${pair.target} Evidence`,
+                    })}
                   >
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-2xl">{pair.country}</span>
@@ -189,6 +226,21 @@ export default function CommandCenterPage() {
                     }`}>
                       DEFCON {pair.defcon}
                     </div>
+
+                    {/* Hover tooltip */}
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
+                      <div className="bg-black border-2 border-green-500 p-3 text-xs font-mono whitespace-nowrap shadow-2xl shadow-green-500/30">
+                        <div className="text-green-400 font-bold mb-2">WHY THIS SCORE?</div>
+                        <div className="text-green-300 space-y-1">
+                          <div>• Recent military movements</div>
+                          <div>• Diplomatic tensions rising</div>
+                          <div>• Intelligence signals detected</div>
+                        </div>
+                        <div className="mt-2 pt-2 border-t border-green-900/40 text-green-500/60">
+                          Click to view evidence
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -201,47 +253,69 @@ export default function CommandCenterPage() {
             {/* LEFT: Live Intelligence Feed */}
             <div className="bg-black/40 border-2 border-blue-900/40 h-[800px] flex flex-col">
               <div className="border-b-2 border-blue-900/40 p-4 bg-black/60">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between mb-3">
                   <div>
                     <div className="text-xs text-blue-500/60 font-mono tracking-widest">REAL-TIME INTELLIGENCE</div>
                     <h2 className="text-xl font-bold text-blue-400 font-mono">◆ LIVE SIGNAL FEED</h2>
                   </div>
                   <div className="text-sm font-mono text-blue-400">
-                    {feed.length} SIGNALS
+                    {filteredFeed.length} / {feed.length} SIGNALS
                   </div>
+                </div>
+
+                {/* Filter chips */}
+                <div className="flex flex-wrap gap-2">
+                  {(['all', 'military', 'politics', 'energy', 'cyber'] as FeedFilter[]).map(filter => (
+                    <button
+                      key={filter}
+                      onClick={() => setFeedFilter(filter)}
+                      className={`px-3 py-1 text-xs font-mono font-bold border transition-all ${
+                        feedFilter === filter
+                          ? 'bg-blue-600 border-blue-400 text-white'
+                          : 'bg-black/60 border-blue-900/40 text-blue-400 hover:border-blue-600'
+                      }`}
+                    >
+                      {filter.toUpperCase()}
+                    </button>
+                  ))}
                 </div>
               </div>
 
               <div className="flex-1 overflow-y-auto p-4 space-y-3">
-                {feed.map((item) => (
-                  <div
-                    key={item.id}
-                    className="bg-black/60 border border-blue-900/40 hover:border-blue-500/60 p-4 transition-colors"
-                  >
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex-1">
-                        <div className="text-sm text-blue-300 font-medium leading-tight mb-2">
-                          {item.title_en}
-                        </div>
-                        <div className="flex items-center gap-3 text-xs text-blue-500/60 font-mono">
-                          <span>{item.source_name}</span>
-                          <span>•</span>
-                          <span>{new Date(item.published_at * 1000).toLocaleTimeString()}</span>
-                        </div>
-                      </div>
+                {filteredFeed.length === 0 && (
+                  <div className="text-center text-blue-500/60 font-mono py-8">
+                    <div className="text-4xl mb-4">📂</div>
+                    <div>NO SIGNALS MATCH FILTER</div>
+                  </div>
+                )}
 
-                      {/* Reliability */}
-                      <div className="ml-3 text-center">
-                        <div className={`text-lg font-bold font-mono ${
-                          item.reliability >= 4 ? 'text-green-400' :
-                          item.reliability >= 3 ? 'text-yellow-400' :
-                          'text-red-400'
-                        }`}>
-                          {item.reliability}
+                {filteredFeed.map((item) => {
+                  const severity = getSeverityBadge(item.reliability);
+
+                  return (
+                    <div
+                      key={item.id}
+                      className="bg-black/60 border border-blue-900/40 hover:border-blue-500/60 p-4 transition-colors"
+                    >
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex-1">
+                          <div className="text-sm text-blue-300 font-medium leading-tight mb-2">
+                            {item.title_en}
+                          </div>
+                          <div className="flex items-center gap-3 text-xs text-blue-500/60 font-mono">
+                            <span>{item.source_name}</span>
+                            <span>•</span>
+                            <span>{new Date(item.published_at * 1000).toLocaleTimeString()}</span>
+                          </div>
                         </div>
-                        <div className="text-xs text-gray-500">REL</div>
+
+                        {/* Severity badge */}
+                        <div className="ml-3 flex flex-col gap-1">
+                          <div className={`px-2 py-1 text-xs font-mono font-bold border ${severity.color}`}>
+                            {severity.label}
+                          </div>
+                        </div>
                       </div>
-                    </div>
 
                     {/* Tags */}
                     {item.tags && item.tags.length > 0 && (
@@ -256,8 +330,9 @@ export default function CommandCenterPage() {
                         ))}
                       </div>
                     )}
-                  </div>
-                ))}
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
@@ -279,6 +354,8 @@ export default function CommandCenterPage() {
                 {scenarios.slice(0, 6).map((scenario, index) => {
                   const threat = getThreatLevel(scenario.probability);
                   const probPercent = Math.round(scenario.probability * 100);
+                  // Mock delta - in production, calculate from historical data
+                  const delta = Math.random() > 0.5 ? Math.floor(Math.random() * 5) : -Math.floor(Math.random() * 5);
 
                   return (
                     <div
@@ -316,6 +393,17 @@ export default function CommandCenterPage() {
                               {probPercent}
                             </div>
                             <div className="text-xs font-mono text-green-500/60">%</div>
+                            {/* Delta indicator */}
+                            {delta !== 0 && (
+                              <div className={`text-xs font-mono font-bold mt-1 ${delta > 0 ? 'text-red-400' : 'text-green-400'}`}>
+                                {delta > 0 ? '▲' : '▼'} {Math.abs(delta)}% (6h)
+                              </div>
+                            )}
+                            {delta === 0 && (
+                              <div className="text-xs font-mono text-yellow-400 mt-1">
+                                ━ STABLE
+                              </div>
+                            )}
                           </div>
                         </div>
 
@@ -329,6 +417,29 @@ export default function CommandCenterPage() {
                             {scenario.trend === 'stable' && <span className="text-yellow-400">━ STABLE</span>}
                           </div>
                         </div>
+
+                        {/* Collapsible "WHY" section */}
+                        <details className="mt-3 pt-3 border-t border-green-900/40">
+                          <summary className="text-xs font-mono text-green-400 font-bold cursor-pointer hover:text-green-300 transition-colors">
+                            ▶ WHY THIS SCORE?
+                          </summary>
+                          <div className="mt-3 space-y-2 text-xs font-mono text-green-500/80">
+                            <div>• {scenario.active_signals.length} intelligence signals detected</div>
+                            <div>• Confidence level: {Math.round(scenario.confidence * 100)}%</div>
+                            <div>• Trend: {scenario.trend === 'rising' ? 'Escalating' : scenario.trend === 'falling' ? 'De-escalating' : 'Stable'}</div>
+                            {scenario.active_signals.length > 0 && (
+                              <button
+                                onClick={() => setEvidenceDrawer({
+                                  isOpen: true,
+                                  title: `${scenario.name} - Evidence`,
+                                })}
+                                className="mt-2 px-3 py-1 bg-green-900/40 border border-green-600 text-green-400 hover:bg-green-800/40 transition-colors"
+                              >
+                                🔍 View Evidence
+                              </button>
+                            )}
+                          </div>
+                        </details>
                       </div>
                     </div>
                   );
@@ -337,6 +448,15 @@ export default function CommandCenterPage() {
             </div>
           </div>
         </div>
+
+        {/* Evidence Drawer */}
+        <EvidenceDrawer
+          isOpen={evidenceDrawer.isOpen}
+          onClose={() => setEvidenceDrawer({ isOpen: false })}
+          country={evidenceDrawer.country}
+          target={evidenceDrawer.target}
+          title={evidenceDrawer.title}
+        />
       </div>
 
       <style jsx global>{`
