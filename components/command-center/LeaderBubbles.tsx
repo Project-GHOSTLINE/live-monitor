@@ -1,11 +1,13 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 
 interface Leader {
   country: string;
   countryCode: string;
   flag: string;
+  avatar?: string; // Path to caricature image
   leader: string;
   title: string;
   stance: 'aggressive' | 'defensive' | 'neutral';
@@ -18,6 +20,7 @@ const WORLD_LEADERS: Leader[] = [
     country: 'Israel',
     countryCode: 'IL',
     flag: '🇮🇱',
+    avatar: '/leaders/netanyahu.png',
     leader: 'Netanyahu',
     title: 'Prime Minister',
     stance: 'aggressive',
@@ -28,6 +31,7 @@ const WORLD_LEADERS: Leader[] = [
     country: 'Iran',
     countryCode: 'IR',
     flag: '🇮🇷',
+    avatar: '/leaders/khamenei.png',
     leader: 'Khamenei',
     title: 'Supreme Leader',
     stance: 'aggressive',
@@ -38,6 +42,7 @@ const WORLD_LEADERS: Leader[] = [
     country: 'United States',
     countryCode: 'US',
     flag: '🇺🇸',
+    avatar: '/leaders/biden.png',
     leader: 'Biden',
     title: 'President',
     stance: 'defensive',
@@ -48,6 +53,7 @@ const WORLD_LEADERS: Leader[] = [
     country: 'Russia',
     countryCode: 'RU',
     flag: '🇷🇺',
+    avatar: '/leaders/putin.png',
     leader: 'Putin',
     title: 'President',
     stance: 'aggressive',
@@ -68,6 +74,7 @@ const WORLD_LEADERS: Leader[] = [
     country: 'China',
     countryCode: 'CN',
     flag: '🇨🇳',
+    avatar: '/leaders/xi.png',
     leader: 'Xi Jinping',
     title: 'President',
     stance: 'neutral',
@@ -150,10 +157,20 @@ export function LeaderBubbles() {
                   ? 'border-yellow-400'
                   : 'border-green-600'
               }`}>
-                {/* Flag emoji as avatar */}
-                <div className="absolute inset-0 flex items-center justify-center text-5xl opacity-90">
-                  {leader.flag}
-                </div>
+                {/* Leader caricature or flag fallback */}
+                {leader.avatar ? (
+                  <Image
+                    src={leader.avatar}
+                    alt={leader.leader}
+                    fill
+                    className="object-cover"
+                    sizes="80px"
+                  />
+                ) : (
+                  <div className="absolute inset-0 flex items-center justify-center text-5xl opacity-90">
+                    {leader.flag}
+                  </div>
+                )}
 
                 {/* Readiness indicator ring */}
                 <svg className="absolute inset-0 w-full h-full -rotate-90">
@@ -213,8 +230,18 @@ export function LeaderBubbles() {
           <div className="flex items-start gap-4">
             {/* Large Avatar */}
             <div className="relative">
-              <div className={`w-24 h-24 rounded-full border-4 border-yellow-400 flex items-center justify-center text-6xl bg-gradient-to-br ${getStanceColor(selected.stance)}`}>
-                {selected.flag}
+              <div className={`w-24 h-24 rounded-full border-4 border-yellow-400 overflow-hidden bg-gradient-to-br ${getStanceColor(selected.stance)} ${!selected.avatar ? 'flex items-center justify-center text-6xl' : ''}`}>
+                {selected.avatar ? (
+                  <Image
+                    src={selected.avatar}
+                    alt={selected.leader}
+                    fill
+                    className="object-cover"
+                    sizes="96px"
+                  />
+                ) : (
+                  selected.flag
+                )}
               </div>
               <div className={`absolute -bottom-2 -right-2 px-3 py-1 rounded-full bg-black border-2 font-mono text-sm font-bold ${
                 selected.readiness >= 90 ? 'border-red-600 text-red-400' :
