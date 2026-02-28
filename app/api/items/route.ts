@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDatabase } from '@/lib/db/client';
+import { getDB } from '@/lib/db/adapter';
 import { itemsQuerySchema } from '@/lib/utils/validation';
 import { FeedItem } from '@/types/feed';
 
@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
       time_range: searchParams.get('time_range'),
     });
 
-    const db = getDatabase();
+    const db = getDB();
 
     // Build query
     let whereClauses: string[] = ['is_duplicate = 0'];
@@ -73,21 +73,14 @@ export async function GET(request: NextRequest) {
     const whereClause = whereClauses.join(' AND ');
 
     // Get total count
-    const countResult = db
-      .prepare(`SELECT COUNT(*) as count FROM feed_items WHERE ${whereClause}`)
-      .get(...queryParams) as { count: number };
+    const total = await db.count('feed_items', whereClause, queryParams);
 
-    const total = countResult.count;
-
-    // Get items
-    const items = db
-      .prepare(
-        `SELECT * FROM feed_items
-         WHERE ${whereClause}
-         ORDER BY published_at DESC
-         LIMIT ? OFFSET ?`
-      )
-      .all(...queryParams, params.limit, params.offset) as any[];
+    // Get items with database adapter
+    const items = await db.all(
+      'feed_items',
+      `${whereClause} ORDER BY published_at DESC LIMIT ${params.limit} OFFSET ${params.offset}`,
+      queryParams
+    );
 
     // Parse JSON fields
     const parsedItems: FeedItem[] = items.map(item => ({

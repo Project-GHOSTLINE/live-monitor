@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getDatabase } from '@/lib/db/client';
+import { getDB } from '@/lib/db/adapter';
 import { RateLimiter } from '@/lib/rss/rate-limiter';
 
 export const runtime = 'nodejs';
@@ -7,9 +7,9 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    const db = getDatabase();
+    const db = getDB();
 
-    const sources = db.prepare('SELECT * FROM sources ORDER BY source_type, name').all() as any[];
+    const sources = await db.all('sources');
 
     // Add next fetch time for each source
     const sourcesWithStatus = sources.map(source => ({
