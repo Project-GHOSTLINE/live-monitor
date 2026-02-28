@@ -474,7 +474,7 @@ export function LeaderBubbles() {
 
       {/* Advanced Intel Card - Rendered outside buttons */}
       {hoveredLeader && (
-        <div className="fixed top-20 right-6 z-50">
+        <div className="fixed top-20 left-6 z-50">
           <LeaderIntelCard
             leader={{
               code: hoveredLeader,
