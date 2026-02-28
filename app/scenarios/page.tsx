@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { ScenarioScore } from '@/types/scenario';
 import { Navigation } from '@/components/shared/Navigation';
+import { MilitaryForces } from '@/components/scenarios/MilitaryForces';
 import { useState, useEffect } from 'react';
 
 interface ScenarioWithMetadata extends ScenarioScore {
@@ -298,6 +299,9 @@ export default function ScenariosPage() {
                       <div className={`inline-block px-4 py-2 font-mono text-xs font-bold tracking-widest bg-gradient-to-r ${threat.color} text-white`}>
                         THREAT LEVEL: {threat.label}
                       </div>
+
+                      {/* Military Forces Display */}
+                      <MilitaryForces scenario={scenario} />
                     </div>
                   </div>
                 );
