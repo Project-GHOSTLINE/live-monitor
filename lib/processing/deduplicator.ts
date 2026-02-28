@@ -1,5 +1,5 @@
 import Levenshtein from 'fast-levenshtein';
-import { getDatabase } from '../db/client';
+import { isSupabaseConfigured } from '../db/supabase';
 
 export interface DeduplicationResult {
   isDuplicate: boolean;
@@ -12,12 +12,20 @@ export interface DeduplicationResult {
  * Uses two-stage approach:
  * 1. Exact URL match
  * 2. Title similarity within time window
+ *
+ * Note: Deduplication temporarily disabled for Supabase
  */
 export function detectDuplicate(
   canonicalUrl: string,
   titleEn: string,
   publishedAt: number
 ): DeduplicationResult {
+  // TODO: Implement deduplication for Supabase
+  if (isSupabaseConfigured()) {
+    return { isDuplicate: false };
+  }
+
+  const { getDatabase } = require('../db/client');
   const db = getDatabase();
 
   // Stage 1: Exact URL match

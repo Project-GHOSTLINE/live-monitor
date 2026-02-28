@@ -1,4 +1,4 @@
-import { getDatabase, DB } from '../db/client';
+import { getDB } from '../db/adapter';
 import { RateLimiter } from './rate-limiter';
 import { fetchAndNormalize } from './parser';
 import { detectDuplicate } from '../processing/deduplicator';
@@ -21,11 +21,11 @@ export interface IngestionResult {
  */
 export async function ingestAllSources(): Promise<IngestionResult> {
   const startTime = Date.now();
-  const db = getDatabase();
+  const db = getDB();
   const errors: string[] = [];
 
   // Get all active sources that can be fetched
-  const fetchableSourceIds = RateLimiter.getFetchableSources();
+  const fetchableSourceIds = await RateLimiter.getFetchableSources();
 
   console.log(`📡 Found ${fetchableSourceIds.length} sources ready to fetch`);
 
@@ -48,10 +48,10 @@ export async function ingestAllSources(): Promise<IngestionResult> {
           itemsDuplicate += result.itemsDuplicate;
 
           // Record fetch
-          RateLimiter.recordFetch(sourceId);
+          await RateLimiter.recordFetch(sourceId);
 
           // Log success
-          DB.insert('ingestion_logs', {
+          await db.insert('ingestion_logs', {
             source_id: sourceId,
             status: 'success',
             items_fetched: result.itemsFetched,
@@ -65,7 +65,7 @@ export async function ingestAllSources(): Promise<IngestionResult> {
           console.error('❌', errorMsg);
 
           // Log error
-          DB.insert('ingestion_logs', {
+          await db.insert('ingestion_logs', {
             source_id: sourceId,
             status: 'error',
             items_fetched: 0,
@@ -101,10 +101,10 @@ async function ingestSource(sourceId: number): Promise<{
   durationMs: number;
 }> {
   const startTime = Date.now();
-  const db = getDatabase();
+  const db = getDB();
 
   // Get source details
-  const source = db.prepare('SELECT * FROM sources WHERE id = ?').get(sourceId) as RSSSource;
+  const source = await db.get('sources', sourceId) as RSSSource;
 
   if (!source) {
     throw new Error(`Source ${sourceId} not found`);
@@ -163,7 +163,7 @@ async function ingestSource(sourceId: number): Promise<{
         is_duplicate: false,
       };
 
-      const itemId = DB.insert('feed_items', {
+      const itemId = await db.insert('feed_items', {
         ...feedItem,
         is_duplicate: 0, // Convert boolean to integer
         tags: JSON.stringify(tags),

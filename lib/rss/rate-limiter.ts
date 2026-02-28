@@ -1,15 +1,13 @@
-import { getDatabase } from '../db/client';
+import { getDB } from '../db/adapter';
 
 export class RateLimiter {
   /**
    * Check if a source can be fetched based on rate limit
    */
-  static canFetch(sourceId: number): boolean {
-    const db = getDatabase();
+  static async canFetch(sourceId: number): Promise<boolean> {
+    const db = getDB();
 
-    const source = db
-      .prepare('SELECT last_fetched_at, rate_limit_seconds FROM sources WHERE id = ?')
-      .get(sourceId) as { last_fetched_at?: number; rate_limit_seconds: number } | undefined;
+    const source = await db.get('sources', sourceId) as { last_fetched_at?: number; rate_limit_seconds: number } | undefined;
 
     if (!source || !source.last_fetched_at) {
       return true; // Never fetched before
@@ -24,22 +22,20 @@ export class RateLimiter {
   /**
    * Update last fetched timestamp for a source
    */
-  static recordFetch(sourceId: number): void {
-    const db = getDatabase();
+  static async recordFetch(sourceId: number): Promise<void> {
+    const db = getDB();
     const now = Math.floor(Date.now() / 1000);
 
-    db.prepare('UPDATE sources SET last_fetched_at = ? WHERE id = ?').run(now, sourceId);
+    await db.update('sources', sourceId, { last_fetched_at: now });
   }
 
   /**
    * Get next available fetch time for a source
    */
-  static getNextFetchTime(sourceId: number): Date | null {
-    const db = getDatabase();
+  static async getNextFetchTime(sourceId: number): Promise<Date | null> {
+    const db = getDB();
 
-    const source = db
-      .prepare('SELECT last_fetched_at, rate_limit_seconds FROM sources WHERE id = ?')
-      .get(sourceId) as { last_fetched_at?: number; rate_limit_seconds: number } | undefined;
+    const source = await db.get('sources', sourceId) as { last_fetched_at?: number; rate_limit_seconds: number } | undefined;
 
     if (!source?.last_fetched_at) return null;
 
@@ -50,13 +46,17 @@ export class RateLimiter {
   /**
    * Get all sources that can be fetched now
    */
-  static getFetchableSources(): number[] {
-    const db = getDatabase();
+  static async getFetchableSources(): Promise<number[]> {
+    const db = getDB();
 
-    const sources = db
-      .prepare('SELECT id FROM sources WHERE is_active = 1')
-      .all() as { id: number }[];
+    const sources = await db.all('sources', 'is_active = 1') as { id: number }[];
 
-    return sources.filter(s => this.canFetch(s.id)).map(s => s.id);
+    const fetchable: number[] = [];
+    for (const s of sources) {
+      if (await this.canFetch(s.id)) {
+        fetchable.push(s.id);
+      }
+    }
+    return fetchable;
   }
 }
