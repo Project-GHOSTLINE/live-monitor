@@ -466,25 +466,28 @@ export function LeaderBubbles() {
                 </div>
               </div>
             </div>
-
-            {/* Advanced Intel Card */}
-            {hoveredLeader === leader.countryCode && (
-              <LeaderIntelCard
-                leader={{
-                  code: leader.countryCode,
-                  name: leader.country,
-                  faction: leader.countryCode,
-                  stance: leader.stance,
-                  readiness: readinessData[leader.countryCode]?.readiness_score || leader.readiness,
-                }}
-                power={getCountryPower(leader.countryCode)}
-                pulse={pulseData[leader.countryCode] || undefined}
-                readiness={readinessData[leader.countryCode] || undefined}
-              />
-            )}
           </button>
         ))}
       </div>
+
+      {/* Advanced Intel Card - Rendered outside buttons */}
+      {hoveredLeader && (
+        <div className="fixed top-20 right-6 z-50">
+          <LeaderIntelCard
+            leader={{
+              code: hoveredLeader,
+              name: WORLD_LEADERS.find(l => l.countryCode === hoveredLeader)?.country || hoveredLeader,
+              faction: hoveredLeader,
+              stance: WORLD_LEADERS.find(l => l.countryCode === hoveredLeader)?.stance || 'neutral',
+              readiness: readinessData[hoveredLeader]?.readiness_score ||
+                         WORLD_LEADERS.find(l => l.countryCode === hoveredLeader)?.readiness || 0,
+            }}
+            power={getCountryPower(hoveredLeader)}
+            pulse={pulseData[hoveredLeader] || undefined}
+            readiness={readinessData[hoveredLeader] || undefined}
+          />
+        </div>
+      )}
 
       {/* Leader Modal - AAA 2026 Gamer UI */}
       <LeaderModal
