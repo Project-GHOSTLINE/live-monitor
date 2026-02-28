@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { Navigation } from '@/components/shared/Navigation';
 import { MilitaryForces } from '@/components/scenarios/MilitaryForces';
+import { LeaderBubbles } from '@/components/command-center/LeaderBubbles';
 import { ScenarioScore } from '@/types/scenario';
 import { useState, useEffect } from 'react';
 
@@ -134,6 +135,13 @@ export default function CommandCenterPage() {
                   {currentTime.toLocaleTimeString('en-US', { hour12: false })}
                 </div>
               </div>
+            </div>
+          </div>
+
+          {/* World Leaders Command */}
+          <div className="bg-black/60 border-b-2 border-green-900/40 p-4">
+            <div className="max-w-[2000px] mx-auto">
+              <LeaderBubbles />
             </div>
           </div>
 
