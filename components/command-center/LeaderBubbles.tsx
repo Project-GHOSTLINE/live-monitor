@@ -10,6 +10,7 @@ interface Leader {
   avatar?: string; // Path to caricature image
   leader: string;
   title: string;
+  tagline: string; // C&C style tagline
   stance: 'aggressive' | 'defensive' | 'neutral';
   readiness: number; // 0-100
   relations: { [key: string]: number }; // -100 to 100
@@ -23,6 +24,7 @@ const WORLD_LEADERS: Leader[] = [
     avatar: '/leaders/netanyahu.png',
     leader: 'Netanyahu',
     title: 'Prime Minister',
+    tagline: '"Iron Dome? Iron WILL."',
     stance: 'aggressive',
     readiness: 92,
     relations: { IR: -95, US: 85, LB: -70, SY: -80 },
@@ -34,6 +36,7 @@ const WORLD_LEADERS: Leader[] = [
     avatar: '/leaders/khamenei.png',
     leader: 'Khamenei',
     title: 'Supreme Leader',
+    tagline: '"The Revolution Never Sleeps"',
     stance: 'aggressive',
     readiness: 88,
     relations: { IL: -95, US: -85, RU: 65 },
@@ -45,6 +48,7 @@ const WORLD_LEADERS: Leader[] = [
     avatar: '/leaders/biden.png',
     leader: 'Biden',
     title: 'President',
+    tagline: '"Come on, man! Let\'s go!"',
     stance: 'defensive',
     readiness: 75,
     relations: { IL: 85, IR: -85, RU: -60, CN: -45 },
@@ -56,6 +60,7 @@ const WORLD_LEADERS: Leader[] = [
     avatar: '/leaders/putin.png',
     leader: 'Putin',
     title: 'President',
+    tagline: '"Special Military Excellence"',
     stance: 'aggressive',
     readiness: 85,
     relations: { UA: -90, US: -60, CN: 70, IR: 65 },
@@ -66,6 +71,7 @@ const WORLD_LEADERS: Leader[] = [
     flag: '🇺🇦',
     leader: 'Zelenskyy',
     title: 'President',
+    tagline: '"I Need Ammo, Not a Ride"',
     stance: 'defensive',
     readiness: 95,
     relations: { RU: -90, US: 80, EU: 75 },
@@ -77,6 +83,7 @@ const WORLD_LEADERS: Leader[] = [
     avatar: '/leaders/xi.png',
     leader: 'Xi Jinping',
     title: 'President',
+    tagline: '"One China. Many Options."',
     stance: 'neutral',
     readiness: 70,
     relations: { TW: -75, US: -45, RU: 70 },
@@ -87,6 +94,7 @@ const WORLD_LEADERS: Leader[] = [
     flag: '🇱🇧',
     leader: 'Hezbollah',
     title: 'Faction',
+    tagline: '"Resistance is NOT Futile"',
     stance: 'aggressive',
     readiness: 80,
     relations: { IL: -70, IR: 85, SY: 60 },
@@ -97,6 +105,7 @@ const WORLD_LEADERS: Leader[] = [
     flag: '🇰🇵',
     leader: 'Kim Jong Un',
     title: 'Supreme Leader',
+    tagline: '"Supreme Everything"',
     stance: 'aggressive',
     readiness: 65,
     relations: { US: -90, SK: -85, CN: 50 },
@@ -124,37 +133,42 @@ export function LeaderBubbles() {
 
   return (
     <div className="bg-black/60 border-2 border-green-900/40 p-6">
-      {/* Header */}
-      <div className="flex items-center gap-2 mb-4 pb-3 border-b border-green-900/40">
-        <div className="text-xs text-green-500/80 font-mono tracking-widest">WORLD LEADERS COMMAND</div>
-        <div className="flex-1 h-px bg-green-900/40" />
+      {/* Header - C&C Style */}
+      <div className="mb-6 pb-4 border-b-2 border-green-900/40">
+        <div className="text-xs text-green-500/60 font-mono tracking-widest mb-2">█ FACTION SELECTION PROTOCOL</div>
+        <div className="text-2xl font-mono font-bold text-green-400 tracking-wider glow-text mb-2">
+          ▰▰▰ CHOOSE YOUR COMMANDER ▰▰▰
+        </div>
+        <div className="text-xs text-green-500/70 font-mono italic">
+          "The fate of nations rests in your selection..."
+        </div>
       </div>
 
-      {/* Leader Bubbles Grid */}
-      <div className="grid grid-cols-4 md:grid-cols-8 gap-4 mb-6">
+      {/* Leader Bubbles Grid - C&C Faction Selection Style */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-6">
         {WORLD_LEADERS.map((leader) => (
           <button
             key={leader.countryCode}
             onClick={() => setSelectedLeader(leader.countryCode === selectedLeader ? null : leader.countryCode)}
             onMouseEnter={() => setHoveredLeader(leader.countryCode)}
             onMouseLeave={() => setHoveredLeader(null)}
-            className={`relative group transition-all transform hover:scale-110 ${
+            className={`relative group transition-all transform hover:scale-105 ${
               selectedLeader === leader.countryCode
-                ? 'ring-4 ring-yellow-400 scale-110 z-10'
+                ? 'ring-4 ring-yellow-400 scale-105 z-10'
                 : ''
             }`}
           >
             {/* Bubble Container */}
-            <div className="relative">
+            <div className="relative flex flex-col items-center">
               {/* Glow effect for aggressive leaders */}
               {leader.stance === 'aggressive' && (
-                <div className="absolute inset-0 bg-red-600/20 rounded-full blur-xl animate-pulse" />
+                <div className="absolute inset-0 bg-red-600/20 rounded-full blur-2xl animate-pulse" />
               )}
 
-              {/* Main bubble */}
-              <div className={`relative w-20 h-20 rounded-full border-4 overflow-hidden bg-gradient-to-br ${getStanceColor(leader.stance)} ${
+              {/* Main bubble - BIGGER */}
+              <div className={`relative w-32 h-32 md:w-36 md:h-36 rounded-full border-4 overflow-hidden bg-gradient-to-br ${getStanceColor(leader.stance)} ${
                 selectedLeader === leader.countryCode
-                  ? 'border-yellow-400'
+                  ? 'border-yellow-400 shadow-2xl shadow-yellow-400/50'
                   : 'border-green-600'
               }`}>
                 {/* Leader caricature or flag fallback */}
@@ -164,10 +178,10 @@ export function LeaderBubbles() {
                     alt={leader.leader}
                     fill
                     className="object-cover"
-                    sizes="80px"
+                    sizes="(max-width: 768px) 128px, 144px"
                   />
                 ) : (
-                  <div className="absolute inset-0 flex items-center justify-center text-5xl opacity-90">
+                  <div className="absolute inset-0 flex items-center justify-center text-7xl opacity-90">
                     {leader.flag}
                   </div>
                 )}
@@ -175,21 +189,21 @@ export function LeaderBubbles() {
                 {/* Readiness indicator ring */}
                 <svg className="absolute inset-0 w-full h-full -rotate-90">
                   <circle
-                    cx="40"
-                    cy="40"
-                    r="36"
+                    cx="64"
+                    cy="64"
+                    r="58"
                     fill="none"
                     stroke="currentColor"
-                    strokeWidth="3"
+                    strokeWidth="4"
                     className={getReadinessColor(leader.readiness)}
-                    strokeDasharray={`${(leader.readiness / 100) * 226} 226`}
+                    strokeDasharray={`${(leader.readiness / 100) * 364} 364`}
                     opacity="0.8"
                   />
                 </svg>
               </div>
 
               {/* Readiness percentage badge */}
-              <div className={`absolute -top-1 -right-1 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold font-mono bg-black border-2 ${
+              <div className={`absolute top-0 right-0 w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold font-mono bg-black border-2 ${
                 leader.readiness >= 90 ? 'border-red-600 text-red-400 animate-pulse' :
                 leader.readiness >= 75 ? 'border-orange-600 text-orange-400' :
                 'border-yellow-600 text-yellow-400'
@@ -198,17 +212,20 @@ export function LeaderBubbles() {
               </div>
 
               {/* Stance indicator */}
-              <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-black border border-green-700 text-xs font-mono font-bold">
+              <div className="absolute bottom-0 left-1/2 -translate-x-1/2 px-3 py-1 bg-black border-2 border-green-700 text-sm font-mono font-bold">
                 {leader.stance === 'aggressive' && <span className="text-red-400">⚔️</span>}
                 {leader.stance === 'defensive' && <span className="text-blue-400">🛡️</span>}
                 {leader.stance === 'neutral' && <span className="text-gray-400">⚖️</span>}
               </div>
-            </div>
 
-            {/* Country name label */}
-            <div className="mt-2 text-center">
-              <div className="text-xs font-mono font-bold text-green-400 truncate">
-                {leader.countryCode}
+              {/* COUNTRY NAME - BIG C&C STYLE */}
+              <div className="mt-4 text-center space-y-1">
+                <div className="text-2xl md:text-3xl font-mono font-black text-green-400 tracking-wider glow-text uppercase">
+                  {leader.country}
+                </div>
+                <div className="text-xs font-mono text-green-500/70 italic px-2">
+                  {leader.tagline}
+                </div>
               </div>
             </div>
 
@@ -224,27 +241,27 @@ export function LeaderBubbles() {
         ))}
       </div>
 
-      {/* Selected Leader Detail Panel */}
+      {/* Selected Leader Detail Panel - COMMANDER BRIEFING */}
       {selected && (
-        <div className="bg-black/80 border-2 border-yellow-500 p-4 animate-fade-in">
-          <div className="flex items-start gap-4">
-            {/* Large Avatar */}
+        <div className="bg-gradient-to-br from-black via-yellow-950/20 to-black border-4 border-yellow-500 p-6 animate-fade-in shadow-2xl shadow-yellow-500/30">
+          <div className="flex items-start gap-6">
+            {/* Large Avatar - BIGGER */}
             <div className="relative">
-              <div className={`w-24 h-24 rounded-full border-4 border-yellow-400 overflow-hidden bg-gradient-to-br ${getStanceColor(selected.stance)} ${!selected.avatar ? 'flex items-center justify-center text-6xl' : ''}`}>
+              <div className={`w-32 h-32 rounded-full border-4 border-yellow-400 overflow-hidden bg-gradient-to-br ${getStanceColor(selected.stance)} shadow-2xl shadow-yellow-400/50 ${!selected.avatar ? 'flex items-center justify-center text-7xl' : ''}`}>
                 {selected.avatar ? (
                   <Image
                     src={selected.avatar}
                     alt={selected.leader}
                     fill
                     className="object-cover"
-                    sizes="96px"
+                    sizes="128px"
                   />
                 ) : (
                   selected.flag
                 )}
               </div>
-              <div className={`absolute -bottom-2 -right-2 px-3 py-1 rounded-full bg-black border-2 font-mono text-sm font-bold ${
-                selected.readiness >= 90 ? 'border-red-600 text-red-400' :
+              <div className={`absolute -bottom-3 -right-3 px-4 py-2 rounded-full bg-black border-3 font-mono text-lg font-bold shadow-lg ${
+                selected.readiness >= 90 ? 'border-red-600 text-red-400 animate-pulse' :
                 selected.readiness >= 75 ? 'border-orange-600 text-orange-400' :
                 'border-yellow-600 text-yellow-400'
               }`}>
@@ -252,14 +269,17 @@ export function LeaderBubbles() {
               </div>
             </div>
 
-            {/* Leader Info */}
+            {/* Leader Info - MORE DRAMATIC */}
             <div className="flex-1">
-              <div className="text-xs text-yellow-500/60 font-mono mb-1">LEADER PROFILE</div>
-              <h3 className="text-2xl font-bold text-yellow-400 font-mono mb-1">
-                {selected.leader}
+              <div className="text-xs text-yellow-500/60 font-mono tracking-widest mb-2">◢ COMMANDER BRIEFING ◣</div>
+              <h3 className="text-4xl font-bold text-yellow-400 font-mono mb-2 glow-text tracking-wide">
+                {selected.country.toUpperCase()}
               </h3>
-              <div className="text-sm text-yellow-300 font-mono mb-3">
-                {selected.title} • {selected.country}
+              <div className="text-xl text-yellow-300 font-mono mb-1">
+                {selected.leader}
+              </div>
+              <div className="text-sm text-yellow-500/80 font-mono mb-3 italic">
+                {selected.tagline}
               </div>
 
               {/* Stats */}
