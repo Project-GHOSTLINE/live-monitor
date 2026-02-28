@@ -24,7 +24,7 @@ export class DatabaseAdapter {
       const supabase = getSupabase();
       const { data: result, error } = await supabase
         .from(table)
-        .insert(cleanData)
+        .insert(cleanData as any)
         .select('id')
         .single();
 
@@ -55,7 +55,7 @@ export class DatabaseAdapter {
 
     if (this.useSupabase) {
       const supabase = getSupabase();
-      const { error } = await supabase.from(table).update(cleanData).eq('id', id);
+      const { error } = await supabase.from(table).update(cleanData as any).eq('id', id);
 
       if (error) throw error;
     } else {
