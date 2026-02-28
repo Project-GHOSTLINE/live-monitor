@@ -5,6 +5,7 @@ import { Navigation } from '@/components/shared/Navigation';
 import { MilitaryForces } from '@/components/scenarios/MilitaryForces';
 import { LeaderBubbles } from '@/components/command-center/LeaderBubbles';
 import { EvidenceDrawer } from '@/components/command-center/EvidenceDrawer';
+import { TheaterMap } from '@/components/command-center/TheaterMap';
 import { ScenarioScore } from '@/types/scenario';
 import { useState, useEffect } from 'react';
 
@@ -173,6 +174,13 @@ export default function CommandCenterPage() {
           <div className="bg-black/60 border-b-2 border-green-900/40 p-4">
             <div className="max-w-[2000px] mx-auto">
               <LeaderBubbles />
+            </div>
+          </div>
+
+          {/* Theater Map - C&C Style */}
+          <div className="bg-black/60 border-b-2 border-green-900/40 p-4">
+            <div className="max-w-[2000px] mx-auto">
+              <TheaterMap />
             </div>
           </div>
 
