@@ -1,0 +1,280 @@
+// Example Usage of Scenario Analysis Pipeline
+// Demonstrates how to use the pipeline with sample data
+
+import { runPipeline, generatePipelineSummary } from './pipeline';
+import { FeedItem } from '@/types/feed';
+
+/**
+ * Example: Analyze recent feed items and generate scenario scores
+ */
+export async function analyzeScenarios(feedItems: FeedItem[]) {
+  console.log(`Analyzing ${feedItems.length} feed items...`);
+
+  // Run the complete pipeline
+  const result = await runPipeline(feedItems);
+
+  // Display results
+  console.log('\n=== Pipeline Results ===');
+  console.log(`Events extracted: ${result.stats.events_extracted}`);
+  console.log(`Signals generated: ${result.stats.signals_generated}`);
+  console.log(`Processing time: ${result.stats.processing_time_ms}ms`);
+
+  // Show top scenarios
+  console.log('\n=== Top Scenarios ===');
+  for (const score of result.scores.slice(0, 5)) {
+    console.log(`\n${score.scenario_id}`);
+    console.log(`  Probability: ${(score.probability * 100).toFixed(1)}%`);
+    console.log(`  Confidence: ${(score.confidence * 100).toFixed(0)}%`);
+    console.log(`  Trend: ${score.trend}`);
+    console.log(`  Active signals: ${score.active_signals.length}`);
+  }
+
+  // Show impacts
+  console.log('\n=== Domain Impacts ===');
+  for (const impact of result.impacts) {
+    console.log(`\n${impact.scenario_id}:`);
+    for (const domain of impact.impacts) {
+      console.log(`  ${domain.domain}: ${domain.level}`);
+      console.log(`    ${domain.reasoning}`);
+    }
+  }
+
+  // Show validation warnings
+  if (result.validation_errors.length > 0) {
+    console.log('\n=== Validation Warnings ===');
+    for (const error of result.validation_errors) {
+      console.log(`  - ${error}`);
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Example: Incremental update with new feed items
+ */
+export async function incrementalUpdate(
+  newItems: FeedItem[],
+  existingResult: any
+) {
+  const { runIncrementalPipeline } = await import('./pipeline');
+
+  console.log(`Processing ${newItems.length} new items...`);
+
+  const previousScores = new Map(
+    existingResult.scores.map((s: any) => [s.scenario_id, s])
+  );
+
+  const result = await runIncrementalPipeline(
+    newItems,
+    existingResult.signals,
+    previousScores
+  );
+
+  // Show changes
+  if (result.changelog.length > 0) {
+    console.log('\n=== Significant Changes ===');
+    for (const change of result.changelog) {
+      console.log(`\n${change.scenario_id}:`);
+      console.log(`  ${change.reason}`);
+      if (change.old_value !== undefined && change.new_value !== undefined) {
+        console.log(`  ${(change.old_value * 100).toFixed(1)}% → ${(change.new_value * 100).toFixed(1)}%`);
+      }
+    }
+  } else {
+    console.log('\nNo significant changes detected.');
+  }
+
+  return result;
+}
+
+/**
+ * Example: Get detailed signal information
+ */
+export function analyzeSignals(result: any) {
+  console.log('\n=== Signal Analysis ===');
+
+  // Group by event type
+  const byEventType: Record<string, number> = {};
+  for (const signal of result.signals) {
+    byEventType[signal.event_type] = (byEventType[signal.event_type] || 0) + 1;
+  }
+
+  console.log('\nSignals by event type:');
+  for (const [type, count] of Object.entries(byEventType)) {
+    console.log(`  ${type}: ${count}`);
+  }
+
+  // Top signals by strength
+  const signalStrengths = result.signals.map((s: any) => ({
+    id: s.signal_id,
+    strength: s.weight * s.reliability * s.recency_factor,
+  }));
+
+  signalStrengths.sort((a: any, b: any) => b.strength - a.strength);
+
+  console.log('\nTop 10 strongest signals:');
+  for (const item of signalStrengths.slice(0, 10)) {
+    console.log(`  ${item.id}: ${item.strength.toFixed(3)}`);
+  }
+
+  // Actors involved
+  const actors = new Set<string>();
+  for (const signal of result.signals) {
+    for (const actor of signal.actors) {
+      actors.add(actor);
+    }
+  }
+
+  console.log(`\nActors identified: ${Array.from(actors).join(', ')}`);
+}
+
+/**
+ * Example: Generate human-readable report
+ */
+export function generateReport(result: any): string {
+  const lines: string[] = [];
+
+  lines.push('# SCENARIO ANALYSIS REPORT');
+  lines.push('');
+  lines.push(`Generated: ${new Date().toLocaleString()}`);
+  lines.push('');
+
+  // Executive summary
+  lines.push('## Executive Summary');
+  lines.push('');
+  lines.push(`Analyzed ${result.stats.events_extracted} events from multiple sources.`);
+  lines.push(`Generated ${result.stats.signals_generated} signals for scenario scoring.`);
+  lines.push('');
+
+  // Top scenarios
+  lines.push('## Most Likely Scenarios');
+  lines.push('');
+
+  for (const score of result.scores.slice(0, 3)) {
+    const prob = (score.probability * 100).toFixed(1);
+    const conf = (score.confidence * 100).toFixed(0);
+
+    lines.push(`### ${score.scenario_id} (${prob}%)`);
+    lines.push('');
+    lines.push(`**Confidence**: ${conf}%`);
+    lines.push(`**Trend**: ${score.trend}`);
+    lines.push('');
+
+    // Find corresponding impact
+    const impact = result.impacts.find((i: any) => i.scenario_id === score.scenario_id);
+    if (impact) {
+      lines.push('**Key Impacts**:');
+      for (const domain of impact.impacts) {
+        lines.push(`- **${domain.domain}** (${domain.level}): ${domain.reasoning}`);
+      }
+      lines.push('');
+    }
+  }
+
+  // Warnings
+  if (result.validation_errors.length > 0) {
+    lines.push('## Warnings');
+    lines.push('');
+    for (const error of result.validation_errors) {
+      lines.push(`- ${error}`);
+    }
+    lines.push('');
+  }
+
+  return lines.join('\n');
+}
+
+/**
+ * Example: Filter scenarios by minimum probability
+ */
+export function filterByProbability(result: any, minProbability: number) {
+  return {
+    ...result,
+    scores: result.scores.filter((s: any) => s.probability >= minProbability),
+  };
+}
+
+/**
+ * Example: Get scenarios with high humanitarian impact
+ */
+export function getHumanitarianCrises(result: any) {
+  const crises: any[] = [];
+
+  for (const impact of result.impacts) {
+    const humanitarianImpact = impact.impacts.find((i: any) => i.domain === 'humanitarian');
+
+    if (humanitarianImpact && (humanitarianImpact.level === 'high' || humanitarianImpact.level === 'medium')) {
+      const score = result.scores.find((s: any) => s.scenario_id === impact.scenario_id);
+
+      crises.push({
+        scenario: impact.scenario_id,
+        probability: score?.probability || 0,
+        impact_level: humanitarianImpact.level,
+        reasoning: humanitarianImpact.reasoning,
+        sources: humanitarianImpact.source_links,
+      });
+    }
+  }
+
+  return crises.sort((a, b) => b.probability - a.probability);
+}
+
+/**
+ * Example: Monitor specific actors
+ */
+export function monitorActors(result: any, actorList: string[]) {
+  const relevantSignals = result.signals.filter((s: any) =>
+    s.actors.some((actor: string) =>
+      actorList.some(monitored =>
+        actor.toLowerCase().includes(monitored.toLowerCase())
+      )
+    )
+  );
+
+  console.log(`\n=== Monitoring ${actorList.join(', ')} ===`);
+  console.log(`Found ${relevantSignals.length} relevant signals`);
+
+  const eventTypes: Record<string, number> = {};
+  for (const signal of relevantSignals) {
+    eventTypes[signal.event_type] = (eventTypes[signal.event_type] || 0) + 1;
+  }
+
+  console.log('\nEvent types:');
+  for (const [type, count] of Object.entries(eventTypes)) {
+    console.log(`  ${type}: ${count}`);
+  }
+
+  return relevantSignals;
+}
+
+// Example usage (commented out, uncomment to run)
+/*
+async function main() {
+  // Mock feed items (in real usage, fetch from database)
+  const feedItems: FeedItem[] = [
+    // ... your feed items
+  ];
+
+  // Run analysis
+  const result = await analyzeScenarios(feedItems);
+
+  // Generate report
+  const report = generateReport(result);
+  console.log('\n' + report);
+
+  // Check humanitarian crises
+  const crises = getHumanitarianCrises(result);
+  if (crises.length > 0) {
+    console.log('\n⚠️  Humanitarian crises detected:');
+    for (const crisis of crises) {
+      console.log(`  - ${crisis.scenario} (${(crisis.probability * 100).toFixed(1)}%)`);
+    }
+  }
+
+  // Monitor specific actors
+  const usIranSignals = monitorActors(result, ['US', 'Iran']);
+}
+
+main().catch(console.error);
+*/

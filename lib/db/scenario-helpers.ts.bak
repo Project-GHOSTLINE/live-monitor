@@ -1,0 +1,738 @@
+// Database Helper Functions for Scenario Analysis System
+// Provides high-level operations for working with scenario tables
+
+import { getSupabase } from './supabase';
+import type {
+  EventFrame,
+  Signal,
+  SignalActivation,
+  ScenarioDefinition,
+  ScenarioScore,
+  ImpactAssessment,
+  ScenarioChangelogEntry,
+  EventFrameFilters,
+  ScenarioFilters,
+  SignalFilters,
+  CreateEventFrameRequest,
+  CalculateScenarioScoreRequest,
+  CalculateScenarioScoreResponse,
+  ImpactAssessmentRequest,
+  ScenarioWithScore,
+  EventFrameWithRelations,
+  SignalWithActivations,
+  ActiveSignalData,
+  ScoreTrend,
+} from '@/types/scenario-db';
+
+// ============================================================
+// EVENT FRAMES
+// ============================================================
+
+/**
+ * Create a new event frame from a feed item
+ */
+export async function createEventFrame(
+  data: CreateEventFrameRequest
+): Promise<EventFrame | null> {
+  const supabase = getSupabase();
+
+  const { data: eventFrame, error } = await supabase
+    .from('event_frames')
+    .insert({
+      feed_item_id: data.feed_item_id,
+      event_type: data.event_type,
+      actors: data.actors,
+      location: data.location || null,
+      severity: data.severity,
+      confidence: data.confidence,
+      source_reliability: 3, // Will be fetched from feed_items table
+      evidence: data.evidence,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error creating event frame:', error);
+    return null;
+  }
+
+  return eventFrame;
+}
+
+/**
+ * Get event frames with optional filters
+ */
+export async function getEventFrames(
+  filters?: EventFrameFilters,
+  limit: number = 100,
+  offset: number = 0
+): Promise<EventFrame[]> {
+  const supabase = getSupabase();
+
+  let query = supabase
+    .from('event_frames')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .range(offset, offset + limit - 1);
+
+  if (filters) {
+    if (filters.event_types && filters.event_types.length > 0) {
+      query = query.in('event_type', filters.event_types);
+    }
+
+    if (filters.severity_min !== undefined) {
+      query = query.gte('severity', filters.severity_min);
+    }
+
+    if (filters.severity_max !== undefined) {
+      query = query.lte('severity', filters.severity_max);
+    }
+
+    if (filters.confidence_min !== undefined) {
+      query = query.gte('confidence', filters.confidence_min);
+    }
+
+    if (filters.time_range) {
+      query = query
+        .gte('created_at', filters.time_range.start)
+        .lte('created_at', filters.time_range.end);
+    }
+
+    if (filters.feed_item_ids && filters.feed_item_ids.length > 0) {
+      query = query.in('feed_item_id', filters.feed_item_ids);
+    }
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error('Error fetching event frames:', error);
+    return [];
+  }
+
+  return data || [];
+}
+
+/**
+ * Get event frames with their related feed items and activated signals
+ */
+export async function getEventFramesWithRelations(
+  filters?: EventFrameFilters,
+  limit: number = 50
+): Promise<EventFrameWithRelations[]> {
+  const supabase = getSupabase();
+
+  const eventFrames = await getEventFrames(filters, limit);
+
+  // Fetch related data
+  const eventFrameIds = eventFrames.map((ef) => ef.id).filter(Boolean) as number[];
+
+  if (eventFrameIds.length === 0) {
+    return [];
+  }
+
+  // Get feed items
+  const { data: feedItems } = await supabase
+    .from('feed_items')
+    .select('id, title_en, source_name, published_at')
+    .in('id', eventFrames.map((ef) => ef.feed_item_id));
+
+  // Get signal activations
+  const { data: activations } = await supabase
+    .from('signal_activations')
+    .select('*')
+    .in('event_frame_id', eventFrameIds);
+
+  // Combine data
+  const feedItemMap = new Map(feedItems?.map((fi) => [fi.id, fi]) || []);
+  const activationsByEventFrame = new Map<number, SignalActivation[]>();
+
+  activations?.forEach((activation) => {
+    const existing = activationsByEventFrame.get(activation.event_frame_id) || [];
+    activationsByEventFrame.set(activation.event_frame_id, [...existing, activation]);
+  });
+
+  return eventFrames.map((ef) => ({
+    ...ef,
+    feed_item: feedItemMap.get(ef.feed_item_id),
+    activated_signals: activationsByEventFrame.get(ef.id!),
+  }));
+}
+
+// ============================================================
+// SIGNALS
+// ============================================================
+
+/**
+ * Get all active signals
+ */
+export async function getActiveSignals(
+  filters?: SignalFilters
+): Promise<Signal[]> {
+  const supabase = getSupabase();
+
+  let query = supabase
+    .from('signals')
+    .select('*')
+    .eq('is_active', true)
+    .order('weight', { ascending: false });
+
+  if (filters) {
+    if (filters.categories && filters.categories.length > 0) {
+      query = query.in('category', filters.categories);
+    }
+
+    if (filters.scope && filters.scope.length > 0) {
+      query = query.in('scope', filters.scope);
+    }
+
+    if (filters.requires_verification !== undefined) {
+      query = query.eq('requires_verification', filters.requires_verification);
+    }
+
+    if (filters.weight_min !== undefined) {
+      query = query.gte('weight', filters.weight_min);
+    }
+
+    if (filters.weight_max !== undefined) {
+      query = query.lte('weight', filters.weight_max);
+    }
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error('Error fetching signals:', error);
+    return [];
+  }
+
+  return data || [];
+}
+
+/**
+ * Get signal by code
+ */
+export async function getSignalByCode(code: string): Promise<Signal | null> {
+  const supabase = getSupabase();
+
+  const { data, error } = await supabase
+    .from('signals')
+    .select('*')
+    .eq('code', code)
+    .single();
+
+  if (error) {
+    console.error('Error fetching signal:', error);
+    return null;
+  }
+
+  return data;
+}
+
+/**
+ * Get signals with their recent activations
+ */
+export async function getSignalsWithActivations(
+  timeWindowHours: number = 168
+): Promise<SignalWithActivations[]> {
+  const supabase = getSupabase();
+
+  const signals = await getActiveSignals();
+  const cutoffTime = Math.floor(Date.now() / 1000) - timeWindowHours * 3600;
+
+  const { data: activations } = await supabase
+    .from('signal_activations')
+    .select('*')
+    .eq('is_active', true)
+    .gte('activated_at', cutoffTime)
+    .order('activated_at', { ascending: false });
+
+  const activationsBySignal = new Map<number, SignalActivation[]>();
+  activations?.forEach((activation) => {
+    const existing = activationsBySignal.get(activation.signal_id) || [];
+    activationsBySignal.set(activation.signal_id, [...existing, activation]);
+  });
+
+  return signals.map((signal) => {
+    const signalActivations = activationsBySignal.get(signal.id!) || [];
+    return {
+      ...signal,
+      recent_activations: signalActivations,
+      activation_count: signalActivations.length,
+      last_activated: signalActivations[0]?.activated_at,
+    };
+  });
+}
+
+// ============================================================
+// SIGNAL ACTIVATIONS
+// ============================================================
+
+/**
+ * Activate a signal based on an event frame
+ */
+export async function activateSignal(
+  signalId: number,
+  eventFrameId: number,
+  confidence: number
+): Promise<SignalActivation | null> {
+  const supabase = getSupabase();
+
+  // Get signal to calculate expiration
+  const signal = await supabase
+    .from('signals')
+    .select('half_life_hours')
+    .eq('id', signalId)
+    .single();
+
+  const expiresAt = signal.data
+    ? Math.floor(Date.now() / 1000) + signal.data.half_life_hours * 3600 * 3
+    : undefined;
+
+  const { data, error } = await supabase
+    .from('signal_activations')
+    .insert({
+      signal_id: signalId,
+      event_frame_id: eventFrameId,
+      confidence,
+      expires_at: expiresAt,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error activating signal:', error);
+    return null;
+  }
+
+  return data;
+}
+
+/**
+ * Verify a signal activation
+ */
+export async function verifySignalActivation(
+  activationId: number,
+  verifiedBy: string
+): Promise<boolean> {
+  const supabase = getSupabase();
+
+  const { error } = await supabase
+    .from('signal_activations')
+    .update({
+      is_verified: true,
+      verified_by: verifiedBy,
+      verified_at: Math.floor(Date.now() / 1000),
+    })
+    .eq('id', activationId);
+
+  if (error) {
+    console.error('Error verifying signal activation:', error);
+    return false;
+  }
+
+  return true;
+}
+
+// ============================================================
+// SCENARIOS
+// ============================================================
+
+/**
+ * Get all scenario definitions
+ */
+export async function getScenarioDefinitions(
+  filters?: ScenarioFilters
+): Promise<ScenarioDefinition[]> {
+  const supabase = getSupabase();
+
+  let query = supabase
+    .from('scenario_definitions')
+    .select('*')
+    .order('name');
+
+  if (filters) {
+    if (filters.is_active !== undefined) {
+      query = query.eq('is_active', filters.is_active);
+    }
+
+    if (filters.geographic_scope && filters.geographic_scope.length > 0) {
+      query = query.in('geographic_scope', filters.geographic_scope);
+    }
+
+    if (filters.last_triggered_after !== undefined) {
+      query = query.gte('last_triggered_at', filters.last_triggered_after);
+    }
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error('Error fetching scenario definitions:', error);
+    return [];
+  }
+
+  return data || [];
+}
+
+/**
+ * Get scenario definition by code
+ */
+export async function getScenarioByCode(
+  code: string
+): Promise<ScenarioDefinition | null> {
+  const supabase = getSupabase();
+
+  const { data, error } = await supabase
+    .from('scenario_definitions')
+    .select('*')
+    .eq('code', code)
+    .single();
+
+  if (error) {
+    console.error('Error fetching scenario:', error);
+    return null;
+  }
+
+  return data;
+}
+
+/**
+ * Get scenarios with their current scores
+ */
+export async function getScenariosWithScores(): Promise<ScenarioWithScore[]> {
+  const supabase = getSupabase();
+
+  const scenarios = await getScenarioDefinitions({ is_active: true });
+
+  // Get latest score for each scenario
+  const scenarioIds = scenarios.map((s) => s.id).filter(Boolean) as number[];
+
+  if (scenarioIds.length === 0) {
+    return [];
+  }
+
+  const { data: scores } = await supabase
+    .from('scenario_scores')
+    .select('*')
+    .in('scenario_id', scenarioIds)
+    .order('calculated_at', { ascending: false });
+
+  // Get latest score for each scenario
+  const latestScores = new Map<number, ScenarioScore>();
+  scores?.forEach((score) => {
+    if (!latestScores.has(score.scenario_id)) {
+      latestScores.set(score.scenario_id, score);
+    }
+  });
+
+  return scenarios.map((scenario) => {
+    const currentScore = latestScores.get(scenario.id!);
+    return {
+      ...scenario,
+      current_score: currentScore,
+      active_signal_count: currentScore?.signal_count,
+      trend: currentScore?.trend,
+    };
+  });
+}
+
+// ============================================================
+// SCENARIO SCORING
+// ============================================================
+
+/**
+ * Calculate decay factor for a signal activation
+ */
+function calculateDecay(
+  activatedAt: number,
+  halfLifeHours: number,
+  currentTime: number = Math.floor(Date.now() / 1000)
+): number {
+  const hoursElapsed = (currentTime - activatedAt) / 3600;
+  return Math.pow(0.5, hoursElapsed / halfLifeHours);
+}
+
+/**
+ * Calculate scenario score based on active signals
+ */
+export async function calculateScenarioScore(
+  request: CalculateScenarioScoreRequest
+): Promise<CalculateScenarioScoreResponse | null> {
+  const supabase = getSupabase();
+
+  const timeWindowHours = request.time_window_hours || 720; // 30 days default
+  const minConfidence = request.min_confidence || 0.5;
+  const cutoffTime = Math.floor(Date.now() / 1000) - timeWindowHours * 3600;
+  const currentTime = Math.floor(Date.now() / 1000);
+
+  // Get scenario definition
+  const { data: scenario, error: scenarioError } = await supabase
+    .from('scenario_definitions')
+    .select('*')
+    .eq('id', request.scenario_id)
+    .single();
+
+  if (scenarioError || !scenario) {
+    console.error('Error fetching scenario:', scenarioError);
+    return null;
+  }
+
+  const triggerSignals = scenario.trigger_signals as string[];
+
+  // Get active signal activations for this scenario
+  const { data: signals } = await supabase
+    .from('signals')
+    .select('id, code, weight, half_life_hours')
+    .in('code', triggerSignals)
+    .eq('is_active', true);
+
+  if (!signals || signals.length === 0) {
+    return null;
+  }
+
+  const signalIds = signals.map((s) => s.id);
+
+  const { data: activations } = await supabase
+    .from('signal_activations')
+    .select('*')
+    .in('signal_id', signalIds)
+    .eq('is_active', true)
+    .gte('activated_at', cutoffTime)
+    .gte('confidence', minConfidence);
+
+  // Calculate weighted score
+  const signalMap = new Map(signals.map((s) => [s.id, s]));
+  const activeSignals: ActiveSignalData[] = [];
+  const signalContributions: any[] = [];
+  let totalScore = 0;
+
+  activations?.forEach((activation) => {
+    const signal = signalMap.get(activation.signal_id);
+    if (!signal) return;
+
+    const decayFactor = calculateDecay(
+      activation.activated_at,
+      signal.half_life_hours,
+      currentTime
+    );
+
+    const contribution = signal.weight * activation.confidence * decayFactor;
+    totalScore += contribution;
+
+    signalContributions.push({
+      signal_code: signal.code,
+      base_weight: signal.weight,
+      confidence: activation.confidence,
+      decay_factor: decayFactor,
+      final_contribution: contribution,
+    });
+
+    // Group by signal code for active_signals
+    const existing = activeSignals.find((as) => as.signal_code === signal.code);
+    if (existing) {
+      existing.event_frame_ids.push(activation.event_frame_id);
+    } else {
+      activeSignals.push({
+        signal_code: signal.code,
+        weight: signal.weight,
+        confidence: activation.confidence,
+        event_frame_ids: [activation.event_frame_id],
+        activated_at: activation.activated_at,
+        decay_factor: decayFactor,
+      });
+    }
+  });
+
+  // Normalize score to [0, 1]
+  const normalizedScore = Math.min(totalScore, 1.0);
+
+  // Calculate probability (score adjusted by base threshold)
+  const probability = Math.min(
+    normalizedScore / scenario.base_threshold,
+    1.0
+  );
+
+  // Determine trend (compare with previous score)
+  const { data: previousScores } = await supabase
+    .from('scenario_scores')
+    .select('score')
+    .eq('scenario_id', request.scenario_id)
+    .order('calculated_at', { ascending: false })
+    .limit(2);
+
+  let trend: ScoreTrend = 'stable';
+  if (previousScores && previousScores.length > 0) {
+    const prevScore = previousScores[0].score;
+    if (normalizedScore > prevScore * 1.1) {
+      trend = 'increasing';
+    } else if (normalizedScore < prevScore * 0.9) {
+      trend = 'decreasing';
+    }
+  }
+
+  // Calculate confidence based on number of signals and data quality
+  const confidence = Math.min(
+    (activeSignals.length / triggerSignals.length) * 0.7 +
+      (activations?.length || 0) * 0.02,
+    1.0
+  );
+
+  return {
+    scenario_id: request.scenario_id,
+    score: normalizedScore,
+    probability,
+    trend,
+    active_signals: activeSignals,
+    confidence,
+    calculation: {
+      scenario_id: request.scenario_id,
+      signal_contributions: signalContributions,
+      total_score: totalScore,
+      normalized_score: normalizedScore,
+      calculation_timestamp: currentTime,
+    },
+  };
+}
+
+/**
+ * Save a calculated scenario score
+ */
+export async function saveScenarioScore(
+  calculation: CalculateScenarioScoreResponse
+): Promise<ScenarioScore | null> {
+  const supabase = getSupabase();
+
+  const { data, error } = await supabase
+    .from('scenario_scores')
+    .insert({
+      scenario_id: calculation.scenario_id,
+      score: calculation.score,
+      probability: calculation.probability,
+      trend: calculation.trend,
+      active_signals: calculation.active_signals,
+      signal_count: calculation.active_signals.length,
+      confidence: calculation.confidence,
+      data_quality: calculation.confidence, // Can be refined
+    })
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error saving scenario score:', error);
+    return null;
+  }
+
+  return data;
+}
+
+// ============================================================
+// IMPACT MATRIX
+// ============================================================
+
+/**
+ * Create an impact assessment
+ */
+export async function createImpactAssessment(
+  request: ImpactAssessmentRequest
+): Promise<ImpactAssessment | null> {
+  const supabase = getSupabase();
+
+  const { data, error } = await supabase
+    .from('impact_matrix')
+    .insert({
+      scenario_id: request.scenario_id,
+      domain: request.domain,
+      impact_level: request.impact_level,
+      impact_score: request.impact_level === 'critical' ? 100 :
+                     request.impact_level === 'high' ? 75 :
+                     request.impact_level === 'moderate' ? 50 :
+                     request.impact_level === 'low' ? 25 : 10,
+      reasoning: request.reasoning,
+      timeframe: request.timeframe,
+      reversibility: request.reversibility,
+      sources: request.sources,
+      affected_regions: request.affected_regions,
+      confidence: request.confidence,
+      assessed_by: 'system',
+    })
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error creating impact assessment:', error);
+    return null;
+  }
+
+  return data;
+}
+
+/**
+ * Get impact assessments for a scenario
+ */
+export async function getScenarioImpacts(
+  scenarioId: number
+): Promise<ImpactAssessment[]> {
+  const supabase = getSupabase();
+
+  const { data, error } = await supabase
+    .from('impact_matrix')
+    .select('*')
+    .eq('scenario_id', scenarioId)
+    .order('impact_score', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching impact assessments:', error);
+    return [];
+  }
+
+  return data || [];
+}
+
+// ============================================================
+// CHANGELOG
+// ============================================================
+
+/**
+ * Log a scenario change
+ */
+export async function logScenarioChange(
+  entry: Omit<ScenarioChangelogEntry, 'id' | 'timestamp' | 'created_at'>
+): Promise<boolean> {
+  const supabase = getSupabase();
+
+  const { error } = await supabase
+    .from('scenario_changelog')
+    .insert(entry);
+
+  if (error) {
+    console.error('Error logging scenario change:', error);
+    return false;
+  }
+
+  return true;
+}
+
+/**
+ * Get changelog for a scenario
+ */
+export async function getScenarioChangelog(
+  scenarioId: number,
+  limit: number = 100
+): Promise<ScenarioChangelogEntry[]> {
+  const supabase = getSupabase();
+
+  const { data, error } = await supabase
+    .from('scenario_changelog')
+    .select('*')
+    .eq('scenario_id', scenarioId)
+    .order('timestamp', { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    console.error('Error fetching changelog:', error);
+    return [];
+  }
+
+  return data || [];
+}

@@ -1,0 +1,399 @@
+// Impact Assessment Calculator
+// Calculates domain-specific impacts for scenarios based on active signals
+
+import {
+  Signal,
+  Scenario,
+  ImpactMatrix,
+  ImpactDomain,
+  ImpactLevel,
+  SeverityLevel,
+  ScenarioScore,
+  ScenarioTemplate,
+} from '@/types/scenario';
+
+/**
+ * Domain impact rules based on event types and actors
+ */
+interface ImpactRule {
+  domain: ImpactDomain['domain'];
+  trigger_events: string[];
+  trigger_actors?: string[];
+  severity_mapping: Record<SeverityLevel, ImpactLevel>;
+  reasoning_template: string;
+}
+
+const IMPACT_RULES: ImpactRule[] = [
+  {
+    domain: 'aviation',
+    trigger_events: ['strike', 'border_closure', 'warning', 'security_alert'],
+    trigger_actors: ['Iran', 'Israel', 'US', 'Lebanon', 'Syria'],
+    severity_mapping: {
+      low: 'low',
+      medium: 'medium',
+      high: 'high',
+      critical: 'high',
+    },
+    reasoning_template: 'Risque accru pour les vols survolant ou desservant la région en raison de {events}',
+  },
+  {
+    domain: 'energy',
+    trigger_events: ['strike', 'sanction', 'infrastructure_damage', 'border_closure'],
+    trigger_actors: ['Iran', 'Saudi Arabia', 'UAE', 'Russia'],
+    severity_mapping: {
+      low: 'low',
+      medium: 'medium',
+      high: 'high',
+      critical: 'high',
+    },
+    reasoning_template: 'Impact potentiel sur les approvisionnements énergétiques suite à {events}',
+  },
+  {
+    domain: 'cyber',
+    trigger_events: ['cyber_attack', 'infrastructure_damage', 'warning'],
+    severity_mapping: {
+      low: 'low',
+      medium: 'medium',
+      high: 'high',
+      critical: 'high',
+    },
+    reasoning_template: 'Menace cyber accrue avec {events} signalées',
+  },
+  {
+    domain: 'humanitarian',
+    trigger_events: ['civilian_casualties', 'aid_blockage', 'infrastructure_damage', 'border_closure'],
+    severity_mapping: {
+      low: 'medium',
+      medium: 'high',
+      high: 'high',
+      critical: 'high',
+    },
+    reasoning_template: 'Crise humanitaire aggravée par {events}',
+  },
+  {
+    domain: 'supply_chain',
+    trigger_events: ['border_closure', 'sanction', 'strike', 'economic_disruption'],
+    severity_mapping: {
+      low: 'low',
+      medium: 'medium',
+      high: 'high',
+      critical: 'high',
+    },
+    reasoning_template: 'Perturbations des chaînes d\'approvisionnement dues à {events}',
+  },
+  {
+    domain: 'financial',
+    trigger_events: ['sanction', 'economic_disruption', 'policy_change'],
+    severity_mapping: {
+      low: 'low',
+      medium: 'medium',
+      high: 'high',
+      critical: 'high',
+    },
+    reasoning_template: 'Volatilité des marchés financiers en raison de {events}',
+  },
+  {
+    domain: 'security',
+    trigger_events: ['strike', 'troop_movement', 'warning', 'protest', 'cyber_attack'],
+    severity_mapping: {
+      low: 'low',
+      medium: 'medium',
+      high: 'high',
+      critical: 'high',
+    },
+    reasoning_template: 'Risque sécuritaire élevé suite à {events}',
+  },
+];
+
+/**
+ * Check if signal matches rule criteria
+ */
+function signalMatchesRule(signal: Signal, rule: ImpactRule): boolean {
+  // Check event type match
+  const eventTypeMatch = rule.trigger_events.includes(signal.event_type);
+
+  if (!eventTypeMatch) {
+    return false;
+  }
+
+  // If rule specifies actors, check for match
+  if (rule.trigger_actors && rule.trigger_actors.length > 0) {
+    const hasActorMatch = signal.actors.some(actor =>
+      rule.trigger_actors!.some(ruleActor =>
+        actor.toLowerCase().includes(ruleActor.toLowerCase()) ||
+        ruleActor.toLowerCase().includes(actor.toLowerCase())
+      )
+    );
+
+    return hasActorMatch;
+  }
+
+  return true; // Event type matches and no actor restriction
+}
+
+/**
+ * Calculate impact level for a domain based on matching signals
+ */
+function calculateDomainImpact(
+  signals: Signal[],
+  rule: ImpactRule
+): { level: ImpactLevel; matchingSignals: Signal[] } | null {
+  const matchingSignals = signals.filter(signal => signalMatchesRule(signal, rule));
+
+  if (matchingSignals.length === 0) {
+    return null; // No impact
+  }
+
+  // Find highest severity among matching signals
+  const severityOrder: SeverityLevel[] = ['low', 'medium', 'high', 'critical'];
+  let maxSeverity: SeverityLevel = 'low';
+
+  for (const signal of matchingSignals) {
+    if (severityOrder.indexOf(signal.severity) > severityOrder.indexOf(maxSeverity)) {
+      maxSeverity = signal.severity;
+    }
+  }
+
+  // Map severity to impact level using rule mapping
+  const impactLevel = rule.severity_mapping[maxSeverity];
+
+  return { level: impactLevel, matchingSignals };
+}
+
+/**
+ * Generate reasoning text for impact
+ */
+function generateReasoning(
+  rule: ImpactRule,
+  matchingSignals: Signal[]
+): string {
+  // Extract unique event types
+  const eventTypes = Array.from(new Set(matchingSignals.map(s => s.event_type)));
+  const eventText = eventTypes.join(', ');
+
+  // Replace template variable
+  return rule.reasoning_template.replace('{events}', eventText);
+}
+
+/**
+ * Calculate impacts for all domains
+ */
+export function calculateImpacts(
+  scenarioId: string,
+  signals: Signal[]
+): ImpactMatrix {
+  const impacts: ImpactDomain[] = [];
+  let overallSeverity: SeverityLevel = 'low';
+
+  for (const rule of IMPACT_RULES) {
+    const result = calculateDomainImpact(signals, rule);
+
+    if (result) {
+      const { level, matchingSignals } = result;
+
+      const impact: ImpactDomain = {
+        domain: rule.domain,
+        level,
+        reasoning: generateReasoning(rule, matchingSignals),
+        supporting_signals: matchingSignals.map(s => s.signal_id),
+        source_links: Array.from(new Set(matchingSignals.flatMap(s => s.feed_item_ids))),
+      };
+
+      impacts.push(impact);
+
+      // Update overall severity
+      const impactLevelOrder: ImpactLevel[] = ['low', 'medium', 'high'];
+      const severityLevelOrder: SeverityLevel[] = ['low', 'medium', 'high', 'critical'];
+
+      // Map impact level to severity for comparison
+      const impactSeverity: SeverityLevel = level === 'high' ? 'high' : level === 'medium' ? 'medium' : 'low';
+
+      if (severityLevelOrder.indexOf(impactSeverity) > severityLevelOrder.indexOf(overallSeverity)) {
+        overallSeverity = impactSeverity;
+      }
+    }
+  }
+
+  // If high impacts across multiple domains, escalate to critical
+  const highImpacts = impacts.filter(i => i.level === 'high').length;
+  if (highImpacts >= 4) {
+    overallSeverity = 'critical';
+  }
+
+  return {
+    scenario_id: scenarioId,
+    impacts,
+    overall_severity: overallSeverity,
+    last_updated: Date.now(),
+  };
+}
+
+/**
+ * Calculate impacts for multiple scenarios
+ */
+export function calculateAllImpacts(
+  scores: ScenarioScore[]
+): ImpactMatrix[] {
+  return scores.map(score =>
+    calculateImpacts(score.scenario_id, score.active_signals)
+  );
+}
+
+/**
+ * Get high-priority impacts (medium or high level)
+ */
+export function getHighPriorityImpacts(matrix: ImpactMatrix): ImpactDomain[] {
+  return matrix.impacts.filter(impact =>
+    impact.level === 'medium' || impact.level === 'high'
+  );
+}
+
+/**
+ * Get impacts by domain
+ */
+export function getImpactsByDomain(
+  matrices: ImpactMatrix[],
+  domain: ImpactDomain['domain']
+): ImpactDomain[] {
+  return matrices.flatMap(matrix =>
+    matrix.impacts.filter(impact => impact.domain === domain)
+  );
+}
+
+/**
+ * Calculate aggregate impact across all scenarios
+ */
+export function calculateAggregateImpact(
+  matrices: ImpactMatrix[]
+): Record<ImpactDomain['domain'], ImpactLevel> {
+  const domainImpacts: Record<string, ImpactLevel[]> = {};
+
+  // Collect all impacts by domain
+  for (const matrix of matrices) {
+    for (const impact of matrix.impacts) {
+      if (!domainImpacts[impact.domain]) {
+        domainImpacts[impact.domain] = [];
+      }
+      domainImpacts[impact.domain].push(impact.level);
+    }
+  }
+
+  // Calculate aggregate (max level per domain)
+  const aggregate: Record<string, ImpactLevel> = {};
+  const levelOrder: ImpactLevel[] = ['low', 'medium', 'high'];
+
+  for (const [domain, levels] of Object.entries(domainImpacts)) {
+    let maxLevel: ImpactLevel = 'low';
+
+    for (const level of levels) {
+      if (levelOrder.indexOf(level) > levelOrder.indexOf(maxLevel)) {
+        maxLevel = level;
+      }
+    }
+
+    aggregate[domain] = maxLevel;
+  }
+
+  return aggregate as Record<ImpactDomain['domain'], ImpactLevel>;
+}
+
+/**
+ * Generate impact summary text
+ */
+export function generateImpactSummary(matrix: ImpactMatrix): string {
+  const highPriority = getHighPriorityImpacts(matrix);
+
+  if (highPriority.length === 0) {
+    return 'Impacts limités sur les opérations.';
+  }
+
+  const domainNames: Record<string, string> = {
+    aviation: 'aviation',
+    energy: 'énergie',
+    cyber: 'cybersécurité',
+    humanitarian: 'humanitaire',
+    supply_chain: 'chaînes d\'approvisionnement',
+    financial: 'marchés financiers',
+    security: 'sécurité',
+  };
+
+  const impactTexts = highPriority.map(impact => {
+    const domainName = domainNames[impact.domain] || impact.domain;
+    const levelText = impact.level === 'high' ? 'élevé' : 'modéré';
+    return `${domainName} (${levelText})`;
+  });
+
+  return `Impacts sur: ${impactTexts.join(', ')}.`;
+}
+
+/**
+ * Compare impacts between two time periods
+ */
+export function compareImpacts(
+  current: ImpactMatrix,
+  previous: ImpactMatrix
+): { domain: string; change: 'increased' | 'decreased' | 'stable' }[] {
+  const changes: { domain: string; change: 'increased' | 'decreased' | 'stable' }[] = [];
+
+  const levelOrder: ImpactLevel[] = ['low', 'medium', 'high'];
+
+  // Create maps for easier lookup
+  const currentMap = new Map(current.impacts.map(i => [i.domain, i.level]));
+  const previousMap = new Map(previous.impacts.map(i => [i.domain, i.level]));
+
+  // Check all domains
+  const allDomains = new Set([
+    ...currentMap.keys(),
+    ...previousMap.keys(),
+  ]);
+
+  for (const domain of allDomains) {
+    const currentLevel = currentMap.get(domain) || 'low';
+    const previousLevel = previousMap.get(domain) || 'low';
+
+    const currentIndex = levelOrder.indexOf(currentLevel);
+    const previousIndex = levelOrder.indexOf(previousLevel);
+
+    if (currentIndex > previousIndex) {
+      changes.push({ domain, change: 'increased' });
+    } else if (currentIndex < previousIndex) {
+      changes.push({ domain, change: 'decreased' });
+    } else {
+      changes.push({ domain, change: 'stable' });
+    }
+  }
+
+  return changes;
+}
+
+/**
+ * Validate impact matrix (anti-hallucination check)
+ */
+export function validateImpactMatrix(matrix: ImpactMatrix): {
+  valid: boolean;
+  errors: string[];
+} {
+  const errors: string[] = [];
+
+  // Check that all impacts have supporting signals
+  for (const impact of matrix.impacts) {
+    if (impact.supporting_signals.length === 0) {
+      errors.push(`Impact ${impact.domain} n'a aucun signal de support`);
+    }
+
+    // Check that all impacts have source links
+    if (impact.source_links.length === 0) {
+      errors.push(`Impact ${impact.domain} n'a aucune source liée`);
+    }
+
+    // Check reasoning is not empty
+    if (!impact.reasoning || impact.reasoning.trim().length === 0) {
+      errors.push(`Impact ${impact.domain} n'a aucune justification`);
+    }
+  }
+
+  return {
+    valid: errors.length === 0,
+    errors,
+  };
+}

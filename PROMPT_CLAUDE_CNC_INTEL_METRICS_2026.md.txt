@@ -1,0 +1,240 @@
+# Claude Code — Build "C&C Intel" (Countries/Army/Leaders) + Live Scenario Engine (2026 metrics)
+
+## Goal
+Create an interactive Command & Conquer-style "Intel" section + a scenario engine that updates from collected news/social feeds.
+
+The system is informational and uses public sources. MUST:
+- respect ToS (no paywall bypass, no aggressive scraping)
+- store timestamps + attribution + confidence
+- stay neutral (no inflammatory claims)
+- separate: "baseline capabilities" (slow-changing) vs "live posture" (signal-driven)
+
+Deliverables:
+- Pages: /intel, /intel/[faction], /scenarios, /methodology
+- APIs: ingest baseline metrics, update leaders, compute live posture, recompute scenarios
+- Storage schema + seed data
+- README + .env.example
+
+---
+
+## Sources (public, 2026)
+A) Global Firepower (GFP)
+- Countries listing (rank + PwrIndx) + category pages (manpower/equipment/finance/logistics)
+- Use as baseline "capability snapshot" (public estimate)
+Notes: 145 powers, PwrIndx smaller = stronger conventional capability.
+
+B) SIPRI
+- Military Expenditure Database (time series up to 2024; annual updates)
+- Arms Transfers Database + sources/methods
+Use for: budgets, arms flow indicators, credibility for "procurement / imports".
+
+C) Leaders
+- CIA World Leaders directory (weekly updated)
+- UN protocol list PDF as secondary check
+Store: head of state, head of government, defense minister (if available).
+
+D) Optional
+- NATO defence expenditure PDF (2014–2025) for NATO members
+- UNROCA for declared transfers categories
+
+---
+
+## Data Model (DB)
+
+### Faction (country or group)
+- id (slug)
+- name
+- type: "country"
+- region_tags: string[]
+- emblem_url (optional)
+- ui_color (hex)
+- created_at
+
+### Leaders (sourced, timestamped)
+- id
+- faction_id
+- role: "head_of_state" | "head_of_government" | "defense_minister" | "military_chief" (optional)
+- name
+- source_url
+- retrieved_at
+
+### CapabilityBaseline (slow-changing; public estimate)
+- id
+- faction_id
+- year (e.g., 2026)
+- source_primary: "GFP"
+- gfp_rank (int)
+- gfp_pwrindx (decimal)
+- gfp_trend (up/stable/down if available)
+- manpower:
+  - population (if available from GFP)
+  - manpower_available
+  - fit_for_service
+  - reaching_military_age_annually
+  - active_personnel
+  - reserve_personnel
+  - paramilitary
+- air:
+  - aircraft_total
+  - fighters
+  - attack
+  - transport_fixed_wing
+  - trainer
+  - special_mission
+  - tankers
+  - helicopters_total
+  - attack_helos
+- land:
+  - tanks
+  - afv
+  - sp_artillery
+  - towed_artillery
+  - rocket_projectors
+- sea:
+  - fleet_total
+  - submarines
+  - destroyers
+  - frigates
+  - corvettes
+  - patrol
+  - mine_warfare
+  - carriers (if any)
+- finance/logistics (from GFP categories):
+  - defense_budget
+  - external_debt
+  - ppp
+  - forex_gold
+  - airports
+  - major_ports_terminals
+  - merchant_marine
+  - railway_km
+  - roadways_km
+- sources: json array [{title,url,accessed_at}]
+- confidence: "high" | "med" | "low"
+- updated_at
+
+### SpendingBaseline (SIPRI)
+- id
+- faction_id
+- year (latest available)
+- military_expenditure_usd
+- military_expenditure_percent_gdp (if available)
+- source_url
+- retrieved_at
+
+### ArmsTransfers (SIPRI/UNROCA optional)
+- id
+- faction_id
+- year
+- imports_indicator
+- exports_indicator
+- notes
+- source_url
+- retrieved_at
+
+### Feed pipeline (assumed existing)
+- FeedItem
+- EventFrame
+- Signal
+
+### LivePosture (computed from signals, rolling window)
+- id
+- faction_id
+- computed_at
+- readiness_delta (-30..+30)
+- air_control_delta
+- sea_control_delta
+- land_control_delta
+- top_signals: [{code,count,last_seen_at,evidence_urls[]}]
+
+### Scenario Engine
+- ScenarioDef (templates: name, hypothesis, up_signals, down_signals, impact_template)
+- ScenarioScore (scope_key, probability_est, changelog w/ evidence)
+- ImpactMatrix (aviation/energy/cyber/humanitarian/supply_chain/markets/local_security with evidence)
+
+---
+
+## UX (Command & Conquer style)
+/intel:
+- Left: Faction roster (search + filters)
+- Center: "Command Map" (simple SVG map + overlays)
+- Right: Intel panel (tabs: Leaders | Air | Sea | Land | Logistics | Live Signals)
+
+Each Faction Card shows:
+- "Combat Power" (derived from GFP rank/pwrindx) + the raw PwrIndx hidden in tooltip
+- Air/Sea/Land bars (0–100) derived from equipment totals (normalized)
+- "Budget Heat" (from SIPRI if present)
+- "Live Posture" delta (from signals)
+
+/intel/[faction]:
+- Leaders (with sources + date)
+- Baseline capability (GFP + SIPRI + notes)
+- Timeline of last 48h signals impacting that faction
+- "Scenario impact" preview (top 3 scenarios affecting this faction)
+
+/scenarios:
+- list scenarios with probabilities per scope
+- show changelog: why it moved (signals + evidence urls)
+- impact matrix with reasons + citations
+
+/methodology:
+- explain data sources, how bars are computed, dedup, translation, scoring and limitations
+- disclaimer: "public-source estimates; verify with originals"
+
+---
+
+## Key Computations
+
+### 1) Convert GFP into gamer labels
+Implement a mapping:
+- show label: "DOMINANT / MAJOR / STRONG / MID / LIMITED"
+Use quantiles across all countries, not fixed thresholds (more robust year-to-year).
+
+### 2) Power Bars
+Normalize per category:
+- Air bar from aircraft_total/fighters/attack (weighted)
+- Sea bar from fleet_total/subs/frigates/destroyers (weighted)
+- Land bar from tanks/afv/artillery/rockets (weighted)
+- Logistics bar from airports/ports/roads/rail (weighted)
+All bars must be explainable in methodology.
+
+### 3) Live posture from signals
+Rolling window 6h/24h:
+- readiness_delta increases with mobilization/strikes/state_of_emergency signals
+- air_control_delta decreases with airspace-closed signals
+- sea_control_delta increases with naval incident / maritime warning signals
+- land_control_delta increases with border tension / ground clashes signals
+Attach evidence URLs.
+
+### 4) Scenario scoring
+Score(t) = Σ(signal_weight * reliability_factor * severity_factor * recency_decay)
+Probability = logistic(score)
+Changelog entries must cite signals + evidence URLs.
+
+---
+
+## Ingestion Jobs
+- Baseline refresh (daily/weekly): GFP rank + category stats; SIPRI updates when available.
+- Leaders refresh (weekly): CIA World Leaders + optional UN PDF cross-check.
+- Live recompute: after each feed ingestion, recompute posture + scenarios.
+
+Implement:
+- /api/baseline/refresh (protected by SECRET)
+- /api/leaders/refresh (protected)
+- /api/recompute (protected)
+- /api/factions, /api/factions/[id], /api/scenarios
+
+Cache & rate limit:
+- use ETag/Last-Modified when possible
+- backoff on errors, do not hammer sources
+
+---
+
+## Start Work
+1) Audit repo and pick DB (Supabase/Postgres preferred; else SQLite).
+2) Implement schema + seed.
+3) Implement baseline ingestion (GFP) + leaders ingestion (CIA).
+4) Build /intel UI.
+5) Add live posture + scenarios.
+6) Write methodology + README.
+Return file tree + run instructions + what sources are enabled by default.

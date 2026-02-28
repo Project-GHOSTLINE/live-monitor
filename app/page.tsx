@@ -16,14 +16,22 @@ export default function Home() {
           Aggregated updates from BBC, Reuters, Al Jazeera, UN, and more. Auto-translated to English.
         </p>
 
-        <Link
-          href="/monitor"
-          className="inline-block px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg text-lg transition-colors"
-        >
-          Open Live Monitor →
-        </Link>
+        <div className="flex gap-4 justify-center">
+          <Link
+            href="/monitor"
+            className="inline-block px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg text-lg transition-colors"
+          >
+            Open Live Monitor →
+          </Link>
+          <Link
+            href="/scenarios"
+            className="inline-block px-8 py-4 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg text-lg transition-colors"
+          >
+            View Scenarios →
+          </Link>
+        </div>
 
-        <div className="mt-16 grid grid-cols-3 gap-8 text-center">
+        <div className="mt-16 grid grid-cols-4 gap-8 text-center">
           <div>
             <div className="text-4xl font-bold text-blue-400 mb-2">12</div>
             <div className="text-slate-400">Reputable Sources</div>
@@ -35,6 +43,10 @@ export default function Home() {
           <div>
             <div className="text-4xl font-bold text-purple-400 mb-2">Live</div>
             <div className="text-slate-400">Updates</div>
+          </div>
+          <div>
+            <div className="text-4xl font-bold text-orange-400 mb-2">8</div>
+            <div className="text-slate-400">Scenario Analysis</div>
           </div>
         </div>
 

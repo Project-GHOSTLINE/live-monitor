@@ -1,0 +1,350 @@
+// Scenario Analysis Pipeline Orchestrator
+// Coordinates the 4-step process: Event Extraction → Signal Mapping → Scenario Scoring → Impact Calculation
+
+import { FeedItem } from '@/types/feed';
+import {
+  EventFrame,
+  Signal,
+  ScenarioScore,
+  ImpactMatrix,
+  ScenarioChangelog,
+  ScenarioTemplate,
+  DEFAULT_SCENARIOS,
+} from '@/types/scenario';
+
+import { extractEvents, extractEventFrame } from './event-extractor';
+import { mapSignals, filterSignalsByConfidence, getTopSignals } from './signal-mapper';
+import {
+  scoreAllScenarios,
+  detectSignificantChanges,
+  getTopScenarios,
+} from './scenario-scorer';
+import {
+  calculateAllImpacts,
+  validateImpactMatrix,
+  generateImpactSummary,
+} from './impact-calculator';
+
+export interface PipelineConfig {
+  minSignalConfidence: number; // Minimum confidence for signals (0-1)
+  topSignalsLimit: number; // Max number of signals to consider
+  topScenariosLimit: number; // Max scenarios to return
+  changeThreshold: number; // Threshold for significant changes (0-1)
+  enableValidation: boolean; // Enable anti-hallucination validation
+}
+
+export const DEFAULT_CONFIG: PipelineConfig = {
+  minSignalConfidence: 0.3,
+  topSignalsLimit: 50,
+  topScenariosLimit: 5,
+  changeThreshold: 0.15,
+  enableValidation: true,
+};
+
+export interface PipelineResult {
+  events: EventFrame[];
+  signals: Signal[];
+  scores: ScenarioScore[];
+  impacts: ImpactMatrix[];
+  changelog: ScenarioChangelog[];
+  stats: PipelineStats;
+  validation_errors: string[];
+}
+
+export interface PipelineStats {
+  events_extracted: number;
+  signals_generated: number;
+  scenarios_scored: number;
+  impacts_calculated: number;
+  processing_time_ms: number;
+}
+
+/**
+ * Run the complete scenario analysis pipeline
+ */
+export async function runPipeline(
+  feedItems: FeedItem[],
+  previousScores?: Map<string, ScenarioScore>,
+  config: PipelineConfig = DEFAULT_CONFIG,
+  templates: ScenarioTemplate[] = DEFAULT_SCENARIOS
+): Promise<PipelineResult> {
+  const startTime = Date.now();
+  const validation_errors: string[] = [];
+
+  try {
+    // Step 1: Event Extraction
+    console.log('[Pipeline] Step 1: Extracting events...');
+    const events = extractEvents(feedItems);
+    console.log(`[Pipeline] Extracted ${events.length} events from ${feedItems.length} feed items`);
+
+    if (events.length === 0) {
+      console.warn('[Pipeline] No events extracted, returning empty results');
+      return {
+        events: [],
+        signals: [],
+        scores: [],
+        impacts: [],
+        changelog: [],
+        stats: {
+          events_extracted: 0,
+          signals_generated: 0,
+          scenarios_scored: 0,
+          impacts_calculated: 0,
+          processing_time_ms: Date.now() - startTime,
+        },
+        validation_errors: ['No events extracted from feed items'],
+      };
+    }
+
+    // Step 2: Signal Mapping
+    console.log('[Pipeline] Step 2: Mapping signals...');
+
+    // Build reliability map from feed items
+    const reliabilityMap = new Map<number, number>();
+    for (const item of feedItems) {
+      if (item.id) {
+        reliabilityMap.set(item.id, item.reliability);
+      }
+    }
+
+    let signals = mapSignals(events, reliabilityMap);
+    console.log(`[Pipeline] Generated ${signals.length} raw signals`);
+
+    // Filter by confidence
+    signals = filterSignalsByConfidence(signals, config.minSignalConfidence);
+    console.log(`[Pipeline] ${signals.length} signals after confidence filtering`);
+
+    // Limit to top signals
+    if (signals.length > config.topSignalsLimit) {
+      signals = getTopSignals(signals, config.topSignalsLimit);
+      console.log(`[Pipeline] Limited to top ${config.topSignalsLimit} signals`);
+    }
+
+    if (signals.length === 0) {
+      console.warn('[Pipeline] No signals passed confidence threshold');
+      return {
+        events,
+        signals: [],
+        scores: [],
+        impacts: [],
+        changelog: [],
+        stats: {
+          events_extracted: events.length,
+          signals_generated: 0,
+          scenarios_scored: 0,
+          impacts_calculated: 0,
+          processing_time_ms: Date.now() - startTime,
+        },
+        validation_errors: ['No signals passed confidence threshold'],
+      };
+    }
+
+    // Step 3: Scenario Scoring
+    console.log('[Pipeline] Step 3: Scoring scenarios...');
+
+    let scores = scoreAllScenarios(signals, previousScores);
+    console.log(`[Pipeline] Scored ${scores.length} scenarios`);
+
+    // Detect changes
+    const changes = previousScores
+      ? detectSignificantChanges(scores, previousScores, config.changeThreshold)
+      : [];
+
+    // Convert changes to changelog format
+    const changelog: ScenarioChangelog[] = changes.map(change => ({
+      scenario_id: change.scenario_id,
+      change_type: change.direction === 'increase' ? 'probability_increase' : 'probability_decrease',
+      old_value: change.old_probability,
+      new_value: change.new_probability,
+      reason: `Probabilité ${change.direction === 'increase' ? 'augmentée' : 'diminuée'} de ${(change.change * 100).toFixed(1)}% en raison de nouveaux signaux`,
+      timestamp: Date.now(),
+    }));
+    console.log(`[Pipeline] Detected ${changelog.length} significant changes`);
+
+    // Limit to top scenarios
+    scores = getTopScenarios(scores, config.topScenariosLimit);
+    console.log(`[Pipeline] Limited to top ${config.topScenariosLimit} scenarios`);
+
+    // Step 4: Impact Calculation
+    console.log('[Pipeline] Step 4: Calculating impacts...');
+    const impacts = calculateAllImpacts(scores);
+    console.log(`[Pipeline] Calculated impacts for ${impacts.length} scenarios`);
+
+    // Validation (anti-hallucination)
+    if (config.enableValidation) {
+      console.log('[Pipeline] Running validation checks...');
+
+      for (const impact of impacts) {
+        const validation = validateImpactMatrix(impact);
+        if (!validation.valid) {
+          validation_errors.push(...validation.errors);
+        }
+      }
+
+      // Check signal-source linkage
+      for (const signal of signals) {
+        if (signal.feed_item_ids.length === 0) {
+          validation_errors.push(`Signal ${signal.signal_id} has no source links`);
+        }
+      }
+
+      console.log(`[Pipeline] Validation: ${validation_errors.length} errors found`);
+    }
+
+    const processingTime = Date.now() - startTime;
+
+    console.log(`[Pipeline] Complete in ${processingTime}ms`);
+
+    return {
+      events,
+      signals,
+      scores,
+      impacts,
+      changelog,
+      stats: {
+        events_extracted: events.length,
+        signals_generated: signals.length,
+        scenarios_scored: scores.length,
+        impacts_calculated: impacts.length,
+        processing_time_ms: processingTime,
+      },
+      validation_errors,
+    };
+
+  } catch (error) {
+    console.error('[Pipeline] Error:', error);
+    throw error;
+  }
+}
+
+/**
+ * Run pipeline incrementally with new feed items
+ * Merges new signals with existing ones
+ */
+export async function runIncrementalPipeline(
+  newFeedItems: FeedItem[],
+  existingSignals: Signal[],
+  previousScores: Map<string, ScenarioScore>,
+  config: PipelineConfig = DEFAULT_CONFIG
+): Promise<PipelineResult> {
+  console.log('[Pipeline] Running incremental update...');
+
+  // Extract events from new items only
+  const newEvents = extractEvents(newFeedItems);
+
+  // Map to signals
+  const reliabilityMap = new Map<number, number>();
+  for (const item of newFeedItems) {
+    if (item.id) {
+      reliabilityMap.set(item.id, item.reliability);
+    }
+  }
+
+  const newSignals = mapSignals(newEvents, reliabilityMap);
+
+  // Merge with existing signals
+  const allSignals = [...existingSignals, ...newSignals];
+
+  // Filter and limit
+  let signals = filterSignalsByConfidence(allSignals, config.minSignalConfidence);
+  signals = getTopSignals(signals, config.topSignalsLimit);
+
+  // Continue with scoring and impact calculation
+  let scores = scoreAllScenarios(signals, previousScores);
+  const changes = detectSignificantChanges(scores, previousScores, config.changeThreshold);
+
+  // Convert changes to changelog format
+  const changelog: ScenarioChangelog[] = changes.map(change => ({
+    scenario_id: change.scenario_id,
+    change_type: change.direction === 'increase' ? 'probability_increase' : 'probability_decrease',
+    old_value: change.old_probability,
+    new_value: change.new_probability,
+    reason: `Probabilité ${change.direction === 'increase' ? 'augmentée' : 'diminuée'} de ${(change.change * 100).toFixed(1)}% en raison de nouveaux signaux`,
+    timestamp: Date.now(),
+  }));
+
+  scores = getTopScenarios(scores, config.topScenariosLimit);
+  const impacts = calculateAllImpacts(scores);
+
+  // Validation
+  const validation_errors: string[] = [];
+  if (config.enableValidation) {
+    for (const impact of impacts) {
+      const validation = validateImpactMatrix(impact);
+      if (!validation.valid) {
+        validation_errors.push(...validation.errors);
+      }
+    }
+  }
+
+  return {
+    events: newEvents,
+    signals,
+    scores,
+    impacts,
+    changelog,
+    stats: {
+      events_extracted: newEvents.length,
+      signals_generated: signals.length,
+      scenarios_scored: scores.length,
+      impacts_calculated: impacts.length,
+      processing_time_ms: 0,
+    },
+    validation_errors,
+  };
+}
+
+/**
+ * Generate human-readable summary of pipeline results
+ */
+export function generatePipelineSummary(result: PipelineResult): string {
+  const lines: string[] = [];
+
+  lines.push('=== Analyse de scénarios ===\n');
+
+  // Stats
+  lines.push(`Événements extraits: ${result.stats.events_extracted}`);
+  lines.push(`Signaux générés: ${result.stats.signals_generated}`);
+  lines.push(`Scénarios évalués: ${result.stats.scenarios_scored}`);
+  lines.push(`Temps de traitement: ${result.stats.processing_time_ms}ms\n`);
+
+  // Top scenarios
+  if (result.scores.length > 0) {
+    lines.push('Top scénarios:');
+    for (const score of result.scores) {
+      const probability = (score.probability * 100).toFixed(1);
+      const trend = score.trend === 'rising' ? '↑' : score.trend === 'falling' ? '↓' : '→';
+      lines.push(`  ${trend} ${score.scenario_id}: ${probability}% (confiance: ${(score.confidence * 100).toFixed(0)}%)`);
+    }
+    lines.push('');
+  }
+
+  // Changes
+  if (result.changelog.length > 0) {
+    lines.push('Changements significatifs:');
+    for (const change of result.changelog) {
+      lines.push(`  - ${change.scenario_id}: ${change.reason}`);
+    }
+    lines.push('');
+  }
+
+  // Impacts
+  if (result.impacts.length > 0) {
+    lines.push('Impacts:');
+    for (const impact of result.impacts) {
+      const summary = generateImpactSummary(impact);
+      lines.push(`  ${impact.scenario_id}: ${summary}`);
+    }
+    lines.push('');
+  }
+
+  // Validation errors
+  if (result.validation_errors.length > 0) {
+    lines.push('Avertissements de validation:');
+    for (const error of result.validation_errors) {
+      lines.push(`  ⚠️  ${error}`);
+    }
+  }
+
+  return lines.join('\n');
+}

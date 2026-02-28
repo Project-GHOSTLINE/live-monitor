@@ -9,7 +9,13 @@
     "start": "next start",
     "lint": "next lint",
     "setup-db": "tsx scripts/setup-db.ts",
-    "ingest": "tsx scripts/test-ingest.ts"
+    "ingest": "tsx scripts/test-ingest.ts",
+    "test": "tsx tests/run-tests.ts",
+    "test:event-extractor": "tsx tests/event-extractor.test.ts",
+    "test:signal-mapper": "tsx tests/signal-mapper.test.ts",
+    "test:scenario-scorer": "tsx tests/scenario-scorer.test.ts",
+    "test:integration": "tsx tests/scenarios-integration.test.ts",
+    "seed:scenarios": "tsx scripts/seed-test-scenarios.ts"
   },
   "keywords": [],
   "author": "",

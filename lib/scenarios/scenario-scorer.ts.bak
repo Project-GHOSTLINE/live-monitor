@@ -1,0 +1,274 @@
+/**
+ * Scenario Scorer - Calculates probability scores for scenarios based on signals
+ * Uses Bayesian-inspired scoring with signal matching against scenario templates
+ */
+
+import {
+  Signal,
+  ScenarioTemplate,
+  ScenarioScore,
+  DEFAULT_SCENARIOS,
+} from '@/types/scenario';
+
+/**
+ * Check if a signal matches a signal pattern
+ * Pattern format: "SIG_STRIKE" matches any strike signal
+ *                 "SIG_*_US" matches any signal involving US
+ */
+function signalMatchesPattern(signalId: string, pattern: string): boolean {
+  // Exact match
+  if (signalId === pattern) {
+    return true;
+  }
+
+  // Pattern matching with wildcards
+  const regexPattern = pattern
+    .replace(/\*/g, '.*')
+    .replace(/_/g, '_');
+
+  const regex = new RegExp(`^${regexPattern}$`, 'i');
+  return regex.test(signalId);
+}
+
+/**
+ * Calculate base score from matching signals
+ */
+function calculateBaseScore(
+  signals: Signal[],
+  requiredPatterns: string[],
+  boostPatterns: string[],
+  inhibitPatterns: string[]
+): number {
+  let score = 0;
+
+  // Required signals (must have at least one match)
+  let hasRequired = requiredPatterns.length === 0; // If no requirements, pass
+
+  for (const pattern of requiredPatterns) {
+    const matchingSignals = signals.filter(s => signalMatchesPattern(s.signal_id, pattern));
+
+    if (matchingSignals.length > 0) {
+      hasRequired = true;
+      // Add weighted contribution from matching signals
+      for (const signal of matchingSignals) {
+        score += signal.weight * signal.reliability * signal.recency_factor;
+      }
+    }
+  }
+
+  // If required signals not met, return 0
+  if (!hasRequired) {
+    return 0;
+  }
+
+  // Boost signals (positive contribution)
+  for (const pattern of boostPatterns) {
+    const matchingSignals = signals.filter(s => signalMatchesPattern(s.signal_id, pattern));
+
+    for (const signal of matchingSignals) {
+      score += signal.weight * signal.reliability * signal.recency_factor * 0.5; // 50% weight
+    }
+  }
+
+  // Inhibit signals (negative contribution)
+  for (const pattern of inhibitPatterns) {
+    const matchingSignals = signals.filter(s => signalMatchesPattern(s.signal_id, pattern));
+
+    for (const signal of matchingSignals) {
+      score -= signal.weight * signal.reliability * signal.recency_factor * 0.7; // 70% penalty
+    }
+  }
+
+  return Math.max(score, 0); // Can't go below 0
+}
+
+/**
+ * Convert raw score to probability (0-1) using logistic function
+ */
+function scoreToProbability(score: number, baseline: number): number {
+  // Adjust score relative to baseline
+  const adjustedScore = score + baseline;
+
+  // Logistic function to squash into 0-1 range
+  // P = 1 / (1 + e^(-k * score))
+  const k = 2; // Steepness parameter
+  const probability = 1 / (1 + Math.exp(-k * adjustedScore));
+
+  return Math.max(0, Math.min(1, probability));
+}
+
+/**
+ * Calculate confidence based on signal quality and quantity
+ */
+function calculateConfidence(activeSignals: Signal[]): number {
+  if (activeSignals.length === 0) {
+    return 0;
+  }
+
+  // Average reliability of signals
+  const avgReliability = activeSignals.reduce((sum, s) => sum + s.reliability, 0) / activeSignals.length;
+
+  // Average recency
+  const avgRecency = activeSignals.reduce((sum, s) => sum + s.recency_factor, 0) / activeSignals.length;
+
+  // More signals = higher confidence (up to a point)
+  const quantityFactor = Math.min(activeSignals.length / 10, 1);
+
+  const confidence = (avgReliability + avgRecency + quantityFactor) / 3;
+
+  return Math.max(0, Math.min(1, confidence));
+}
+
+/**
+ * Detect trend by comparing with previous score
+ */
+function detectTrend(
+  currentProbability: number,
+  previousProbability: number | undefined
+): 'rising' | 'stable' | 'falling' {
+  if (previousProbability === undefined) {
+    return 'stable';
+  }
+
+  const change = currentProbability - previousProbability;
+
+  if (change > 0.05) return 'rising';
+  if (change < -0.05) return 'falling';
+  return 'stable';
+}
+
+/**
+ * Score a single scenario template against signals
+ */
+export function scoreScenario(
+  template: ScenarioTemplate,
+  signals: Signal[],
+  previousScore?: ScenarioScore
+): ScenarioScore {
+  // Calculate raw score
+  const rawScore = calculateBaseScore(
+    signals,
+    template.required_signals,
+    template.boost_signals,
+    template.inhibit_signals
+  );
+
+  // Convert to probability
+  const probability = scoreToProbability(rawScore, template.baseline_probability);
+
+  // Find active signals (signals that contributed to this scenario)
+  const activeSignals = signals.filter(signal => {
+    const allPatterns = [
+      ...template.required_signals,
+      ...template.boost_signals,
+      ...template.inhibit_signals,
+    ];
+
+    return allPatterns.some(pattern => signalMatchesPattern(signal.signal_id, pattern));
+  });
+
+  // Calculate confidence
+  const confidence = calculateConfidence(activeSignals);
+
+  // Detect trend
+  const trend = detectTrend(probability, previousScore?.probability);
+
+  return {
+    scenario_id: template.id,
+    probability,
+    raw_score: rawScore,
+    active_signals: activeSignals,
+    confidence,
+    trend,
+    last_updated: Date.now(),
+  };
+}
+
+/**
+ * Score all default scenarios
+ */
+export function scoreAllScenarios(
+  signals: Signal[],
+  previousScores?: Map<string, ScenarioScore>
+): ScenarioScore[] {
+  const scores: ScenarioScore[] = [];
+
+  for (const template of DEFAULT_SCENARIOS) {
+    const previousScore = previousScores?.get(template.id);
+    const score = scoreScenario(template, signals, previousScore);
+    scores.push(score);
+  }
+
+  // Sort by probability (descending)
+  return scores.sort((a, b) => b.probability - a.probability);
+}
+
+/**
+ * Detect significant changes in scenario scores
+ */
+export function detectSignificantChanges(
+  currentScores: ScenarioScore[],
+  previousScores: Map<string, ScenarioScore>,
+  threshold: number = 0.1
+): Array<{
+  scenario_id: string;
+  old_probability: number;
+  new_probability: number;
+  change: number;
+  direction: 'increase' | 'decrease';
+}> {
+  const changes: Array<{
+    scenario_id: string;
+    old_probability: number;
+    new_probability: number;
+    change: number;
+    direction: 'increase' | 'decrease';
+  }> = [];
+
+  for (const currentScore of currentScores) {
+    const previousScore = previousScores.get(currentScore.scenario_id);
+
+    if (!previousScore) {
+      continue;
+    }
+
+    const change = currentScore.probability - previousScore.probability;
+
+    if (Math.abs(change) >= threshold) {
+      changes.push({
+        scenario_id: currentScore.scenario_id,
+        old_probability: previousScore.probability,
+        new_probability: currentScore.probability,
+        change: Math.abs(change),
+        direction: change > 0 ? 'increase' : 'decrease',
+      });
+    }
+  }
+
+  return changes.sort((a, b) => b.change - a.change);
+}
+
+/**
+ * Get top N scenarios by probability
+ */
+export function getTopScenarios(scores: ScenarioScore[], limit: number): ScenarioScore[] {
+  return scores
+    .sort((a, b) => b.probability - a.probability)
+    .slice(0, limit);
+}
+
+/**
+ * Normalize probabilities to sum to 1 (for mutually exclusive scenarios)
+ */
+export function normalizeProbabilities(scores: ScenarioScore[]): ScenarioScore[] {
+  const total = scores.reduce((sum, s) => sum + s.probability, 0);
+
+  if (total === 0) {
+    return scores;
+  }
+
+  return scores.map(score => ({
+    ...score,
+    probability: score.probability / total,
+  }));
+}

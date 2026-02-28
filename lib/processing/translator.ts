@@ -1,4 +1,5 @@
-import { getDatabase } from '../db/client';
+import { getDB } from '../db/adapter';
+import { isSupabaseConfigured } from '../db/supabase';
 import { hash } from '../utils/helpers';
 
 type TranslationService = 'deepl' | 'google' | 'none';
@@ -158,6 +159,12 @@ function getCachedTranslation(
   sourceLang: string,
   targetLang: string
 ): string | null {
+  // TODO: Implement cache for Supabase
+  if (isSupabaseConfigured()) {
+    return null; // Cache disabled for Supabase
+  }
+
+  const { getDatabase } = require('../db/client');
   const db = getDatabase();
   const textHash = hash(text);
 
@@ -178,6 +185,12 @@ function cacheTranslation(
   translatedText: string,
   service: TranslationService
 ): void {
+  // TODO: Implement cache for Supabase
+  if (isSupabaseConfigured()) {
+    return; // Cache disabled for Supabase
+  }
+
+  const { getDatabase } = require('../db/client');
   const db = getDatabase();
   const textHash = hash(sourceText);
 

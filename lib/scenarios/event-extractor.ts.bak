@@ -1,0 +1,350 @@
+// Event Extraction from Feed Items
+// Extracts structured event frames using pattern matching and simple NER
+
+import { FeedItem } from '@/types/feed';
+import {
+  EventFrame,
+  EventType,
+  SeverityLevel,
+  EVENT_WEIGHTS,
+} from '@/types/scenario';
+
+interface ExtractionPattern {
+  event_type: EventType;
+  patterns: RegExp[];
+  severity_base: SeverityLevel;
+  actor_patterns?: RegExp[];
+}
+
+// Pattern definitions for event detection
+const EXTRACTION_PATTERNS: ExtractionPattern[] = [
+  {
+    event_type: 'strike',
+    patterns: [
+      /\b(air)?strike|bombing|missile|rocket|attack|raid|airstrike\b/i,
+      /\bfrappe|bombardement|missile|attaque\b/i,
+    ],
+    severity_base: 'high',
+    actor_patterns: [
+      /\b(US|USA|United States|American|Israel|Israeli|Iran|Iranian|Russia|Russian|Hezbollah|Hamas)\b/gi,
+    ],
+  },
+  {
+    event_type: 'cyber_attack',
+    patterns: [
+      /\bcyber(?: |-)?attack|hacking|data breach|ransomware|ddos\b/i,
+      /\battaque(?: )?cyber|piratage|violation(?: de)? donn[ée]es\b/i,
+    ],
+    severity_base: 'medium',
+  },
+  {
+    event_type: 'troop_movement',
+    patterns: [
+      /\btroop(?: )?(movement|deployment|mobilization)|military(?: )?(buildup|deployment)\b/i,
+      /\bd[ée]ploiement(?: de)? troupes|mobilisation militaire\b/i,
+    ],
+    severity_base: 'high',
+  },
+  {
+    event_type: 'infrastructure_damage',
+    patterns: [
+      /\binfrastructure(?: )?(damage|destruction|attack)|power plant|energy facility|water facility\b/i,
+      /\bd[ée]gâts?(?: aux)? infrastructures|centrale [ée]lectrique|installation [ée]nerg[ée]tique\b/i,
+    ],
+    severity_base: 'high',
+  },
+  {
+    event_type: 'civilian_casualties',
+    patterns: [
+      /\bcivilian(?: )?(casualties|deaths|killed|injured)|non-combatant\b/i,
+      /\bvictimes civiles|morts civils|bless[ée]s civils\b/i,
+    ],
+    severity_base: 'critical',
+  },
+  {
+    event_type: 'sanction',
+    patterns: [
+      /\bsanction|embargo|trade restriction|economic penalty\b/i,
+      /\bsanction|embargo|restriction commerciale\b/i,
+    ],
+    severity_base: 'medium',
+  },
+  {
+    event_type: 'diplomatic_expulsion',
+    patterns: [
+      /\bexpel(led)? diplomat|persona non grata|diplomatic(?: )?break|recall ambassador\b/i,
+      /\bexpulsion(?: de)? diplomate|rupture diplomatique|rappel(?: de)? ambassadeur\b/i,
+    ],
+    severity_base: 'medium',
+  },
+  {
+    event_type: 'border_closure',
+    patterns: [
+      /\bborder(?: )?(closure|closed|shutdown)|crossing closed\b/i,
+      /\bfermeture(?: de)? fronti[eè]re|fronti[eè]re ferm[ée]e\b/i,
+    ],
+    severity_base: 'medium',
+  },
+  {
+    event_type: 'warning',
+    patterns: [
+      /\bwarning|threat|threaten|ultimatum\b/i,
+      /\bavertissement|menace|ultimatum\b/i,
+    ],
+    severity_base: 'low',
+  },
+  {
+    event_type: 'protest',
+    patterns: [
+      /\bprotest|demonstration|rally|march|riot\b/i,
+      /\bmanifest(ation)?|protestation|rassemblement|[ée]meute\b/i,
+    ],
+    severity_base: 'low',
+  },
+  {
+    event_type: 'aid_blockage',
+    patterns: [
+      /\baid(?: )?(blockage|blocked)|humanitarian(?: )?crisis|convoy(?: )?blocked\b/i,
+      /\bblocage(?: de)? aide|crise humanitaire|convoi bloqu[ée]\b/i,
+    ],
+    severity_base: 'high',
+  },
+  {
+    event_type: 'policy_change',
+    patterns: [
+      /\bpolicy(?: )?change|new(?: )?policy|strategic(?: )?shift|doctrine\b/i,
+      /\bchangement(?: de)? politique|nouvelle politique|virage strat[ée]gique\b/i,
+    ],
+    severity_base: 'medium',
+  },
+  {
+    event_type: 'alliance_shift',
+    patterns: [
+      /\balliance(?: )?(shift|change)|coalition|treaty|pact|partnership\b/i,
+      /\bchangement(?: d')? alliance|coalition|trait[ée]|pacte|partenariat\b/i,
+    ],
+    severity_base: 'high',
+  },
+  {
+    event_type: 'economic_disruption',
+    patterns: [
+      /\beconomic(?: )?(crisis|disruption|collapse)|market(?: )?crash|recession\b/i,
+      /\bcrise [ée]conomique|effondrement [ée]conomique|r[ée]cession\b/i,
+    ],
+    severity_base: 'medium',
+  },
+  {
+    event_type: 'negotiation',
+    patterns: [
+      /\bnegotiation|peace(?: )?talk|ceasefire(?: )?talk|dialogue|mediation\b/i,
+      /\bn[ée]gociation|pourparlers(?: de)? paix|dialogue|m[ée]diation|cessez-le-feu\b/i,
+    ],
+    severity_base: 'low',
+  },
+];
+
+// Known actors (countries, organizations)
+const KNOWN_ACTORS = [
+  'US', 'USA', 'United States', 'America', 'American',
+  'Israel', 'Israeli',
+  'Iran', 'Iranian',
+  'Russia', 'Russian',
+  'China', 'Chinese',
+  'UK', 'Britain', 'British',
+  'France', 'French',
+  'Germany', 'German',
+  'Turkey', 'Turkish',
+  'Saudi Arabia', 'Saudi',
+  'UAE', 'Emirati',
+  'Qatar', 'Qatari',
+  'Egypt', 'Egyptian',
+  'Jordan', 'Jordanian',
+  'Lebanon', 'Lebanese',
+  'Syria', 'Syrian',
+  'Iraq', 'Iraqi',
+  'Yemen', 'Yemeni',
+  'Palestine', 'Palestinian',
+  'Hezbollah',
+  'Hamas',
+  'Houthis',
+  'Taliban',
+  'NATO',
+  'UN', 'United Nations',
+  'EU', 'European Union',
+];
+
+/**
+ * Extract actors from text using simple pattern matching
+ */
+function extractActors(text: string): string[] {
+  const actors = new Set<string>();
+  const normalizedText = text.toLowerCase();
+
+  for (const actor of KNOWN_ACTORS) {
+    const pattern = new RegExp(`\\b${actor.toLowerCase()}\\b`, 'i');
+    if (pattern.test(normalizedText)) {
+      // Normalize to canonical form
+      if (['US', 'USA', 'United States', 'America', 'American'].some(a => a.toLowerCase() === actor.toLowerCase())) {
+        actors.add('US');
+      } else if (['Israel', 'Israeli'].some(a => a.toLowerCase() === actor.toLowerCase())) {
+        actors.add('Israel');
+      } else if (['Iran', 'Iranian'].some(a => a.toLowerCase() === actor.toLowerCase())) {
+        actors.add('Iran');
+      } else if (['Russia', 'Russian'].some(a => a.toLowerCase() === actor.toLowerCase())) {
+        actors.add('Russia');
+      } else {
+        actors.add(actor);
+      }
+    }
+  }
+
+  return Array.from(actors);
+}
+
+/**
+ * Extract location from entity_places
+ */
+function extractLocation(feedItem: FeedItem): string | undefined {
+  if (feedItem.entity_places && feedItem.entity_places.length > 0) {
+    return feedItem.entity_places[0];
+  }
+  return undefined;
+}
+
+/**
+ * Determine severity based on content analysis
+ */
+function determineSeverity(
+  text: string,
+  baseSeverity: SeverityLevel
+): SeverityLevel {
+  const lowerText = text.toLowerCase();
+
+  // Upgrade severity indicators
+  const criticalIndicators = [
+    'killed', 'dead', 'deaths', 'casualties', 'massacre', 'destroyed',
+    'tu[ée]s?', 'morts?', 'd[ée]c[eè]s', 'massacr', 'd[ée]truit'
+  ];
+
+  const highIndicators = [
+    'injured', 'wounded', 'damaged', 'attack', 'strike',
+    'bless[ée]s?', 'endommag[ée]', 'attaque', 'frappe'
+  ];
+
+  // Check for critical indicators
+  if (criticalIndicators.some(ind => new RegExp(ind, 'i').test(lowerText))) {
+    return 'critical';
+  }
+
+  // Check for high indicators
+  if (highIndicators.some(ind => new RegExp(ind, 'i').test(lowerText))) {
+    if (baseSeverity === 'low' || baseSeverity === 'medium') {
+      return 'high';
+    }
+  }
+
+  return baseSeverity;
+}
+
+/**
+ * Calculate extraction confidence based on pattern matches and data quality
+ */
+function calculateConfidence(
+  patternMatches: number,
+  hasActors: boolean,
+  sourceReliability: number
+): number {
+  let confidence = 0.5; // Base confidence
+
+  // More pattern matches increase confidence
+  confidence += Math.min(patternMatches * 0.1, 0.2);
+
+  // Having identified actors increases confidence
+  if (hasActors) {
+    confidence += 0.15;
+  }
+
+  // Source reliability factor
+  confidence *= sourceReliability;
+
+  return Math.min(confidence, 1.0);
+}
+
+/**
+ * Extract event frame from feed item
+ * Returns null if no clear event pattern is detected
+ */
+export function extractEventFrame(feedItem: FeedItem): EventFrame | null {
+  const text = `${feedItem.title_en || feedItem.title_original} ${feedItem.summary_en || ''}`;
+
+  if (!text || text.length < 20) {
+    return null; // Not enough content
+  }
+
+  // Try to match event patterns
+  for (const patternDef of EXTRACTION_PATTERNS) {
+    let patternMatches = 0;
+
+    for (const pattern of patternDef.patterns) {
+      if (pattern.test(text)) {
+        patternMatches++;
+      }
+    }
+
+    // If at least one pattern matches, extract event
+    if (patternMatches > 0) {
+      const actors = extractActors(text);
+      const location = extractLocation(feedItem);
+      const severity = determineSeverity(text, patternDef.severity_base);
+      const confidence = calculateConfidence(
+        patternMatches,
+        actors.length > 0,
+        feedItem.reliability
+      );
+
+      // Only return events with minimum confidence
+      if (confidence >= 0.4) {
+        return {
+          event_type: patternDef.event_type,
+          actors,
+          location,
+          severity,
+          confidence,
+          feed_item_id: feedItem.id!,
+          extracted_at: Date.now(),
+        };
+      }
+    }
+  }
+
+  return null; // No clear event detected
+}
+
+/**
+ * Batch extract events from multiple feed items
+ */
+export function extractEvents(feedItems: FeedItem[]): EventFrame[] {
+  const events: EventFrame[] = [];
+
+  for (const item of feedItems) {
+    const event = extractEventFrame(item);
+    if (event) {
+      events.push(event);
+    }
+  }
+
+  return events;
+}
+
+/**
+ * Get event type statistics for debugging
+ */
+export function getEventTypeStats(events: EventFrame[]): Record<EventType, number> {
+  const stats: Partial<Record<EventType, number>> = {};
+
+  for (const event of events) {
+    stats[event.event_type] = (stats[event.event_type] || 0) + 1;
+  }
+
+  return stats as Record<EventType, number>;
+}

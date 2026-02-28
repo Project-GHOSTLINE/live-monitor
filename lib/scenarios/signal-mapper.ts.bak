@@ -1,0 +1,246 @@
+// Signal Mapping from Event Frames
+// Transforms raw events into weighted, normalized signals for scenario scoring
+
+import {
+  EventFrame,
+  Signal,
+  EventType,
+  EVENT_WEIGHTS,
+  SEVERITY_MULTIPLIERS,
+} from '@/types/scenario';
+
+/**
+ * Generate signal ID from event type and actors
+ * Format: SIG_{EVENT}_{ACTOR1}_{ACTOR2}
+ */
+function generateSignalId(eventType: EventType, actors: string[]): string {
+  const normalizedActors = actors
+    .slice(0, 2) // Max 2 actors in signal ID
+    .map(a => a.toUpperCase().replace(/\s+/g, '_'))
+    .sort() // Consistent ordering
+    .join('_');
+
+  const eventPart = eventType.toUpperCase();
+
+  if (normalizedActors) {
+    return `SIG_${eventPart}_${normalizedActors}`;
+  }
+
+  return `SIG_${eventPart}`;
+}
+
+/**
+ * Calculate recency factor (exponential decay)
+ * Events lose weight over time
+ * Half-life: 7 days
+ */
+function calculateRecencyFactor(timestamp: number): number {
+  const now = Date.now();
+  const ageMs = now - timestamp;
+  const ageDays = ageMs / (1000 * 60 * 60 * 24);
+
+  const halfLifeDays = 7;
+  const decayFactor = Math.exp(-Math.LN2 * (ageDays / halfLifeDays));
+
+  return Math.max(decayFactor, 0.1); // Minimum 10% weight even for old events
+}
+
+/**
+ * Calculate signal weight based on event characteristics
+ */
+function calculateSignalWeight(frame: EventFrame): number {
+  // Base weight from event type
+  const baseWeight = EVENT_WEIGHTS[frame.event_type] || 0.5;
+
+  // Severity multiplier
+  const severityMultiplier = SEVERITY_MULTIPLIERS[frame.severity];
+
+  // Confidence factor
+  const confidenceFactor = frame.confidence;
+
+  // Actor count bonus (more actors = more significant)
+  const actorBonus = Math.min(frame.actors.length * 0.05, 0.2);
+
+  const weight = (baseWeight * severityMultiplier * confidenceFactor) + actorBonus;
+
+  return Math.max(0, Math.min(weight, 1.0)); // Clamp to [0, 1]
+}
+
+/**
+ * Map a single event frame to a signal
+ */
+export function mapEventToSignal(frame: EventFrame, sourceReliability: number): Signal {
+  const signalId = generateSignalId(frame.event_type, frame.actors);
+  const weight = calculateSignalWeight(frame);
+  const recencyFactor = calculateRecencyFactor(frame.extracted_at);
+
+  return {
+    signal_id: signalId,
+    event_type: frame.event_type,
+    actors: frame.actors,
+    weight,
+    reliability: sourceReliability,
+    severity: frame.severity,
+    timestamp: frame.extracted_at,
+    feed_item_ids: [frame.feed_item_id],
+    recency_factor: recencyFactor,
+  };
+}
+
+/**
+ * Merge signals with the same signal_id
+ * Combines evidence from multiple sources
+ */
+export function mergeSignals(signals: Signal[]): Signal[] {
+  const signalMap = new Map<string, Signal>();
+
+  for (const signal of signals) {
+    const existing = signalMap.get(signal.signal_id);
+
+    if (!existing) {
+      signalMap.set(signal.signal_id, { ...signal });
+    } else {
+      // Merge: average weights, combine sources, take max severity
+      existing.weight = (existing.weight + signal.weight) / 2;
+      existing.reliability = (existing.reliability + signal.reliability) / 2;
+      existing.recency_factor = Math.max(existing.recency_factor, signal.recency_factor);
+
+      // Update severity to highest
+      const severityOrder = { low: 0, medium: 1, high: 2, critical: 3 };
+      if (severityOrder[signal.severity] > severityOrder[existing.severity]) {
+        existing.severity = signal.severity;
+      }
+
+      // Combine actors (unique)
+      existing.actors = Array.from(new Set([...existing.actors, ...signal.actors]));
+
+      // Combine feed item IDs
+      existing.feed_item_ids = Array.from(new Set([...existing.feed_item_ids, ...signal.feed_item_ids]));
+
+      // Update timestamp to most recent
+      existing.timestamp = Math.max(existing.timestamp, signal.timestamp);
+    }
+  }
+
+  return Array.from(signalMap.values());
+}
+
+/**
+ * Map event frames to signals (batch processing)
+ */
+export function mapSignals(frames: EventFrame[], sourceReliabilityMap: Map<number, number>): Signal[] {
+  const signals = frames.map(frame => {
+    const reliability = sourceReliabilityMap.get(frame.feed_item_id) || 0.5;
+    return mapEventToSignal(frame, reliability);
+  });
+
+  // Merge duplicate signals
+  return mergeSignals(signals);
+}
+
+/**
+ * Filter signals by minimum confidence threshold
+ */
+export function filterSignalsByConfidence(signals: Signal[], minConfidence: number): Signal[] {
+  return signals.filter(signal => {
+    const combinedConfidence = signal.weight * signal.reliability * signal.recency_factor;
+    return combinedConfidence >= minConfidence;
+  });
+}
+
+/**
+ * Get top N signals by weighted score
+ */
+export function getTopSignals(signals: Signal[], limit: number): Signal[] {
+  return signals
+    .map(signal => ({
+      signal,
+      score: signal.weight * signal.reliability * signal.recency_factor,
+    }))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit)
+    .map(item => item.signal);
+}
+
+/**
+ * Group signals by event type
+ */
+export function groupSignalsByEventType(signals: Signal[]): Map<EventType, Signal[]> {
+  const grouped = new Map<EventType, Signal[]>();
+
+  for (const signal of signals) {
+    const existing = grouped.get(signal.event_type) || [];
+    existing.push(signal);
+    grouped.set(signal.event_type, existing);
+  }
+
+  return grouped;
+}
+
+/**
+ * Get signals involving specific actors
+ */
+export function getSignalsByActors(signals: Signal[], actors: string[]): Signal[] {
+  const normalizedActors = actors.map(a => a.toLowerCase());
+
+  return signals.filter(signal =>
+    signal.actors.some(actor =>
+      normalizedActors.includes(actor.toLowerCase())
+    )
+  );
+}
+
+/**
+ * Calculate aggregate signal strength for an event type
+ */
+export function getEventTypeStrength(signals: Signal[], eventType: EventType): number {
+  const relevantSignals = signals.filter(s => s.event_type === eventType);
+
+  if (relevantSignals.length === 0) {
+    return 0;
+  }
+
+  const totalStrength = relevantSignals.reduce((sum, signal) => {
+    return sum + (signal.weight * signal.reliability * signal.recency_factor);
+  }, 0);
+
+  return totalStrength / relevantSignals.length; // Average strength
+}
+
+/**
+ * Detect signal trends (comparing recent vs older signals)
+ */
+export function detectSignalTrend(
+  signals: Signal[],
+  signalId: string,
+  windowHours: number = 48
+): 'rising' | 'stable' | 'falling' {
+  const relevantSignals = signals.filter(s => s.signal_id === signalId);
+
+  if (relevantSignals.length < 2) {
+    return 'stable';
+  }
+
+  const now = Date.now();
+  const windowMs = windowHours * 60 * 60 * 1000;
+
+  const recentSignals = relevantSignals.filter(s => now - s.timestamp < windowMs);
+  const olderSignals = relevantSignals.filter(s => now - s.timestamp >= windowMs);
+
+  if (recentSignals.length === 0) {
+    return 'falling'; // No recent activity
+  }
+
+  if (olderSignals.length === 0) {
+    return 'rising'; // New signal
+  }
+
+  const recentAvg = recentSignals.reduce((sum, s) => sum + s.weight, 0) / recentSignals.length;
+  const olderAvg = olderSignals.reduce((sum, s) => sum + s.weight, 0) / olderSignals.length;
+
+  const changePercent = ((recentAvg - olderAvg) / olderAvg) * 100;
+
+  if (changePercent > 20) return 'rising';
+  if (changePercent < -20) return 'falling';
+  return 'stable';
+}
