@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDatabase } from '@/lib/db/client';
+import { getDB } from '@/lib/db/adapter';
 import { detectSignals } from '@/lib/workers/signalDetector';
 import { extractMapEvents } from '@/lib/workers/mapEventsExtractor';
 import { MapEvent } from '@/lib/signals/signalTypes';
@@ -30,51 +30,32 @@ export async function GET(request: NextRequest) {
       published_at: number;
       source_name: string;
       url?: string;
-      tags?: string;
+      tags?: any;
     }> = [];
 
     try {
-      const db = getDatabase();
+      const db = getDB();
 
       // Calculate timestamp threshold
       const thresholdTimestamp = Math.floor(Date.now() / 1000) - hours * 3600;
 
-      // Fetch recent feed items
-      const stmt = db.prepare(`
-        SELECT
-          id,
-          title_en,
-          summary_en,
-          published_at,
-          source_name,
-          url,
-          tags
-        FROM feed_items
-        WHERE published_at >= ?
-        ORDER BY published_at DESC
-        LIMIT ?
-      `);
-
-      items = stmt.all(thresholdTimestamp, limit) as Array<{
-        id: number;
-        title_en: string;
-        summary_en?: string;
-        published_at: number;
-        source_name: string;
-        url?: string;
-        tags?: string;
-      }>;
+      // Fetch recent feed items using adapter
+      items = await db.all(
+        'feed_items',
+        `published_at >= ${thresholdTimestamp} ORDER BY published_at DESC LIMIT ${limit}`,
+        []
+      );
     } catch (dbError) {
       console.error('Database error:', dbError);
       // Return empty array if DB fails (graceful degradation)
       items = [];
     }
 
-    // Parse tags safely
+    // Parse tags safely (handle both SQLite strings and Supabase JSONB)
     const parsedItems = items.map(item => {
       let tags: string[] = [];
       try {
-        tags = item.tags ? JSON.parse(item.tags) : [];
+        tags = typeof item.tags === 'string' ? JSON.parse(item.tags) : (item.tags || []);
       } catch (parseError) {
         console.error('Tag parse error for item', item.id, parseError);
         tags = [];

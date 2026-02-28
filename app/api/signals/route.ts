@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDatabase } from '@/lib/db/client';
+import { getDB } from '@/lib/db/adapter';
 import { detectSignals, detectSignalsBatch } from '@/lib/workers/signalDetector';
 import { calculateReadinessBatch } from '@/lib/workers/readinessCalculator';
 import { updateConflictGraph } from '@/lib/workers/conflictGraphUpdater';
@@ -26,37 +26,22 @@ export async function GET(request: NextRequest) {
     const hours = parseInt(searchParams.get('hours') || '24');
     const limit = Math.min(parseInt(searchParams.get('limit') || '100'), 500);
 
-    const db = getDatabase();
+    const db = getDB();
 
     // Calculate timestamp threshold
     const thresholdTimestamp = Math.floor(Date.now() / 1000) - hours * 3600;
 
-    // Fetch recent feed items
-    const stmt = db.prepare(`
-      SELECT
-        id,
-        title_en,
-        summary_en,
-        published_at,
-        tags
-      FROM feed_items
-      WHERE published_at >= ?
-      ORDER BY published_at DESC
-      LIMIT ?
-    `);
+    // Fetch recent feed items using adapter
+    const items = await db.all(
+      'feed_items',
+      `published_at >= ${thresholdTimestamp} ORDER BY published_at DESC LIMIT ${limit}`,
+      []
+    );
 
-    const items = stmt.all(thresholdTimestamp, limit) as Array<{
-      id: number;
-      title_en: string;
-      summary_en?: string;
-      published_at: number;
-      tags?: string;
-    }>;
-
-    // Parse tags
+    // Parse tags (handle both SQLite strings and Supabase JSONB)
     const parsedItems = items.map(item => ({
       ...item,
-      tags: item.tags ? JSON.parse(item.tags) : [],
+      tags: typeof item.tags === 'string' ? JSON.parse(item.tags) : (item.tags || []),
     }));
 
     // Detect signals (Worker 1)

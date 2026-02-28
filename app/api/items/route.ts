@@ -82,12 +82,12 @@ export async function GET(request: NextRequest) {
       queryParams
     );
 
-    // Parse JSON fields
+    // Parse JSON fields (handle both SQLite strings and Supabase JSONB objects)
     const parsedItems: FeedItem[] = items.map(item => ({
       ...item,
-      tags: item.tags ? JSON.parse(item.tags) : [],
-      entity_places: item.entity_places ? JSON.parse(item.entity_places) : [],
-      entity_orgs: item.entity_orgs ? JSON.parse(item.entity_orgs) : [],
+      tags: typeof item.tags === 'string' ? JSON.parse(item.tags) : (item.tags || []),
+      entity_places: typeof item.entity_places === 'string' ? JSON.parse(item.entity_places) : (item.entity_places || []),
+      entity_orgs: typeof item.entity_orgs === 'string' ? JSON.parse(item.entity_orgs) : (item.entity_orgs || []),
       is_duplicate: Boolean(item.is_duplicate),
     }));
 

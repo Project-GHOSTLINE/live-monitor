@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
       title_en: item.title_en || item.title_original || 'Untitled',
       source_name: item.source_name || 'Unknown Source',
       published_at: item.published_at,
-      tags: item.tags ? JSON.parse(item.tags) : [],
+      tags: typeof item.tags === 'string' ? JSON.parse(item.tags) : (item.tags || []),
       reliability: item.reliability || 3,
     }));
 
