@@ -363,57 +363,55 @@ export function LeaderBubbles() {
                 <div className="absolute inset-0 bg-red-600/20 rounded-full blur-2xl animate-pulse" />
               )}
 
-              {/* Main bubble - BIGGER */}
-              <div className={`relative w-32 h-32 md:w-36 md:h-36 rounded-full border-4 overflow-hidden bg-gradient-to-br ${getStanceColor(leader.stance)} ${
+              {/* Commander Portrait - 3D Emerging Effect */}
+              <div className={`relative w-32 h-40 md:w-36 md:h-44 overflow-visible ${
                 selectedLeader === leader.countryCode
-                  ? 'border-yellow-400 shadow-2xl shadow-yellow-400/50'
-                  : 'border-green-600'
+                  ? 'scale-110'
+                  : ''
               }`}>
-                {/* Leader caricature or flag fallback */}
-                {leader.avatar ? (
-                  <Image
-                    src={leader.avatar}
-                    alt={leader.leader}
-                    fill
-                    className="object-cover"
-                    sizes="(max-width: 768px) 128px, 144px"
-                  />
-                ) : (
-                  <div className="absolute inset-0 flex items-center justify-center text-7xl opacity-90">
-                    {leader.flag}
-                  </div>
-                )}
+                {/* 3D Shadow layers for depth */}
+                <div className="absolute inset-0 bg-gradient-to-b from-black via-transparent to-black opacity-60 blur-xl transform translate-y-4"></div>
 
-                {/* Readiness indicator ring */}
-                <svg className="absolute inset-0 w-full h-full -rotate-90">
-                  <circle
-                    cx="64"
-                    cy="64"
-                    r="58"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                    className={getReadinessColor(leader.readiness)}
-                    strokeDasharray={`${(leader.readiness / 100) * 364} 364`}
-                    opacity="0.8"
-                  />
-                </svg>
+                {/* Main portrait container */}
+                <div className="relative w-full h-full overflow-hidden bg-gradient-to-b from-gray-900 via-black to-black shadow-2xl" style={{
+                  clipPath: 'polygon(10% 0%, 90% 0%, 100% 100%, 0% 100%)',
+                }}>
+                  {/* Leader caricature or flag fallback */}
+                  {leader.avatar ? (
+                    <Image
+                      src={leader.avatar}
+                      alt={leader.leader}
+                      fill
+                      className="object-cover object-top scale-125 hover:scale-135 transition-transform duration-300"
+                      sizes="(max-width: 768px) 128px, 144px"
+                    />
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center text-7xl opacity-90">
+                      {leader.flag}
+                    </div>
+                  )}
+
+                  {/* Dramatic edge glow */}
+                  <div className={`absolute inset-0 bg-gradient-to-t ${
+                    selectedLeader === leader.countryCode ? 'from-yellow-500/30' : 'from-green-500/20'
+                  } via-transparent to-transparent pointer-events-none`}></div>
+                </div>
               </div>
 
-              {/* Readiness percentage badge */}
-              <div className={`absolute top-0 right-0 w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold font-mono bg-black border-2 ${
-                leader.readiness >= 90 ? 'border-red-600 text-red-400 animate-pulse' :
-                leader.readiness >= 75 ? 'border-orange-600 text-orange-400' :
-                'border-yellow-600 text-yellow-400'
+              {/* Readiness percentage badge - Corner stamp */}
+              <div className={`absolute -top-2 -right-2 w-12 h-12 flex items-center justify-center text-sm font-bold font-mono bg-black border-3 transform rotate-12 shadow-lg ${
+                leader.readiness >= 90 ? 'border-red-600 text-red-400 animate-pulse bg-red-950' :
+                leader.readiness >= 75 ? 'border-orange-600 text-orange-400 bg-orange-950' :
+                'border-yellow-600 text-yellow-400 bg-yellow-950'
               }`}>
                 {leader.readiness}
               </div>
 
-              {/* Stance indicator */}
-              <div className="absolute bottom-0 left-1/2 -translate-x-1/2 px-3 py-1 bg-black border-2 border-green-700 text-sm font-mono font-bold">
-                {leader.stance === 'aggressive' && <span className="text-red-400">⚔️</span>}
-                {leader.stance === 'defensive' && <span className="text-blue-400">🛡️</span>}
-                {leader.stance === 'neutral' && <span className="text-gray-400">⚖️</span>}
+              {/* Stance indicator - Bottom banner */}
+              <div className="absolute -bottom-2 left-0 right-0 px-2 py-1 bg-gradient-to-r from-black via-gray-900 to-black border-t-2 border-green-700 text-sm font-mono font-bold text-center shadow-lg">
+                {leader.stance === 'aggressive' && <span className="text-red-400">⚔️ AGG</span>}
+                {leader.stance === 'defensive' && <span className="text-blue-400">🛡️ DEF</span>}
+                {leader.stance === 'neutral' && <span className="text-gray-400">⚖️ NEU</span>}
               </div>
 
               {/* COUNTRY NAME - BIG C&C STYLE */}
@@ -445,25 +443,41 @@ export function LeaderBubbles() {
           {/* HEADER */}
           <div className="flex items-start gap-6 pb-4 border-b-2 border-yellow-900/40">
             <div className="relative flex-shrink-0">
-              <div className={`w-32 h-32 rounded-full border-4 border-yellow-400 overflow-hidden bg-gradient-to-br ${getStanceColor(selected.stance)} shadow-2xl shadow-yellow-400/50 ${!selected.avatar ? 'flex items-center justify-center text-7xl' : ''}`}>
-                {selected.avatar ? (
-                  <Image
-                    src={selected.avatar}
-                    alt={selected.leader}
-                    fill
-                    className="object-cover"
-                    sizes="128px"
-                  />
-                ) : (
-                  selected.flag
-                )}
-              </div>
-              <div className={`absolute -bottom-3 -right-3 px-4 py-2 rounded-full bg-black border-3 font-mono text-lg font-bold shadow-lg ${
-                selected.readiness >= 90 ? 'border-red-600 text-red-400 animate-pulse' :
-                selected.readiness >= 75 ? 'border-orange-600 text-orange-400' :
-                'border-yellow-600 text-yellow-400'
-              }`}>
-                {selected.readiness}%
+              {/* Large 3D Emerging Commander Portrait */}
+              <div className="relative w-40 h-48 overflow-visible">
+                {/* 3D Shadow layers */}
+                <div className="absolute inset-0 bg-gradient-to-b from-yellow-500/20 via-transparent to-black opacity-80 blur-2xl transform translate-y-6"></div>
+
+                {/* Main portrait - Pentagon shaped */}
+                <div className="relative w-full h-full overflow-hidden bg-gradient-to-b from-yellow-900 via-black to-black shadow-2xl border-4 border-yellow-500" style={{
+                  clipPath: 'polygon(15% 0%, 85% 0%, 100% 100%, 0% 100%)',
+                }}>
+                  {selected.avatar ? (
+                    <Image
+                      src={selected.avatar}
+                      alt={selected.leader}
+                      fill
+                      className="object-cover object-top scale-125"
+                      sizes="160px"
+                    />
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center text-8xl">
+                      {selected.flag}
+                    </div>
+                  )}
+
+                  {/* Dramatic bottom glow */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-yellow-500/40 via-transparent to-transparent pointer-events-none"></div>
+                </div>
+
+                {/* Readiness stamp - rotated */}
+                <div className={`absolute -top-3 -right-3 w-16 h-16 flex items-center justify-center font-mono text-xl font-bold bg-black border-4 transform rotate-12 shadow-2xl ${
+                  selected.readiness >= 90 ? 'border-red-600 text-red-400 animate-pulse bg-red-950' :
+                  selected.readiness >= 75 ? 'border-orange-600 text-orange-400 bg-orange-950' :
+                  'border-yellow-600 text-yellow-400 bg-yellow-950'
+                }`}>
+                  {selected.readiness}
+                </div>
               </div>
             </div>
 
