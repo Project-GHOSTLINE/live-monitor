@@ -4,6 +4,10 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { IntelPopover } from './IntelPopover';
 import { LeaderModal } from './LeaderModal';
+import { LeaderIntelCard } from './LeaderIntelCard';
+import { getCountryPower } from '@/lib/power/getCountryPower';
+import { getFactionPulse, FactionPulse } from '@/lib/pulse/getFactionPulse';
+import { computeReadiness, ReadinessScore } from '@/lib/readiness/computeReadiness';
 
 interface MilitaryAssets {
   ships: number;
@@ -328,6 +332,21 @@ function getReadinessColor(readiness: number) {
 export function LeaderBubbles() {
   const [selectedLeader, setSelectedLeader] = useState<string | null>(null);
   const [hoveredLeader, setHoveredLeader] = useState<string | null>(null);
+  const [pulseData, setPulseData] = useState<Record<string, FactionPulse | null>>({});
+  const [readinessData, setReadinessData] = useState<Record<string, ReadinessScore | null>>({});
+
+  // Load pulse data when leader is hovered
+  useEffect(() => {
+    if (hoveredLeader && !pulseData[hoveredLeader]) {
+      getFactionPulse(hoveredLeader).then(pulse => {
+        setPulseData(prev => ({ ...prev, [hoveredLeader]: pulse }));
+        if (pulse) {
+          const readiness = computeReadiness(pulse);
+          setReadinessData(prev => ({ ...prev, [hoveredLeader]: readiness }));
+        }
+      });
+    }
+  }, [hoveredLeader]);
 
   const selected = WORLD_LEADERS.find(l => l.countryCode === selectedLeader);
 
@@ -448,15 +467,19 @@ export function LeaderBubbles() {
               </div>
             </div>
 
-            {/* Advanced Intel Popover */}
+            {/* Advanced Intel Card */}
             {hoveredLeader === leader.countryCode && (
-              <IntelPopover
-                name={leader.leader}
-                country={leader.country}
-                stance={leader.stance}
-                readiness={leader.readiness}
-                title={leader.title}
-                lastVerified={new Date().toISOString()} // Current date - can be replaced with real data
+              <LeaderIntelCard
+                leader={{
+                  code: leader.countryCode,
+                  name: leader.country,
+                  faction: leader.countryCode,
+                  stance: leader.stance,
+                  readiness: readinessData[leader.countryCode]?.readiness_score || leader.readiness,
+                }}
+                power={getCountryPower(leader.countryCode)}
+                pulse={pulseData[leader.countryCode] || undefined}
+                readiness={readinessData[leader.countryCode] || undefined}
               />
             )}
           </button>
