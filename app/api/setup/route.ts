@@ -18,7 +18,6 @@ export async function GET(request: NextRequest) {
     console.log('✅ Initial ingestion complete!');
 
     return NextResponse.json({
-      success: true,
       message: 'Initial ingestion complete! You can now delete this endpoint.',
       ...result,
     });
