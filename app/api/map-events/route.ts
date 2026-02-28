@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getDatabase } from '@/lib/db/client';
 import { detectSignals } from '@/lib/workers/signalDetector';
 import { extractMapEvents } from '@/lib/workers/mapEventsExtractor';
+import { MapEvent } from '@/lib/signals/signalTypes';
 
 /**
  * GET /api/map-events
@@ -22,28 +23,7 @@ export async function GET(request: NextRequest) {
     const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 200);
     const hours = parseInt(searchParams.get('hours') || '24');
 
-    const db = getDatabase();
-
-    // Calculate timestamp threshold
-    const thresholdTimestamp = Math.floor(Date.now() / 1000) - hours * 3600;
-
-    // Fetch recent feed items
-    const stmt = db.prepare(`
-      SELECT
-        id,
-        title_en,
-        summary_en,
-        published_at,
-        source_name,
-        url,
-        tags
-      FROM feed_items
-      WHERE published_at >= ?
-      ORDER BY published_at DESC
-      LIMIT ?
-    `);
-
-    const items = stmt.all(thresholdTimestamp, limit) as Array<{
+    let items: Array<{
       id: number;
       title_en: string;
       summary_en?: string;
@@ -51,42 +31,99 @@ export async function GET(request: NextRequest) {
       source_name: string;
       url?: string;
       tags?: string;
-    }>;
+    }> = [];
 
-    // Parse tags
-    const parsedItems = items.map(item => ({
-      ...item,
-      tags: item.tags ? JSON.parse(item.tags) : [],
-    }));
+    try {
+      const db = getDatabase();
 
-    // Detect signals for each item
-    const itemsWithSignals = parsedItems.map(item => ({
-      ...item,
-      signals: detectSignals({
-        id: item.id,
-        title_en: item.title_en,
-        summary_en: item.summary_en,
-        published_at: item.published_at,
-        tags: item.tags,
-      }),
-    }));
+      // Calculate timestamp threshold
+      const thresholdTimestamp = Math.floor(Date.now() / 1000) - hours * 3600;
 
-    // Filter items that have signals
-    const itemsWithDetectedSignals = itemsWithSignals.filter(
-      item => item.signals.length > 0
-    );
+      // Fetch recent feed items
+      const stmt = db.prepare(`
+        SELECT
+          id,
+          title_en,
+          summary_en,
+          published_at,
+          source_name,
+          url,
+          tags
+        FROM feed_items
+        WHERE published_at >= ?
+        ORDER BY published_at DESC
+        LIMIT ?
+      `);
 
-    // Extract map events
-    const mapEvents = extractMapEvents(itemsWithDetectedSignals);
+      items = stmt.all(thresholdTimestamp, limit) as Array<{
+        id: number;
+        title_en: string;
+        summary_en?: string;
+        published_at: number;
+        source_name: string;
+        url?: string;
+        tags?: string;
+      }>;
+    } catch (dbError) {
+      console.error('Database error:', dbError);
+      // Return empty array if DB fails (graceful degradation)
+      items = [];
+    }
 
-    // Sort by severity and recency
-    mapEvents.sort((a, b) => {
-      const severityDiff = b.severity - a.severity;
-      if (severityDiff !== 0) return severityDiff;
-
-      // Sort by time (newer first)
-      return new Date(b.time).getTime() - new Date(a.time).getTime();
+    // Parse tags safely
+    const parsedItems = items.map(item => {
+      let tags: string[] = [];
+      try {
+        tags = item.tags ? JSON.parse(item.tags) : [];
+      } catch (parseError) {
+        console.error('Tag parse error for item', item.id, parseError);
+        tags = [];
+      }
+      return {
+        ...item,
+        tags,
+      };
     });
+
+    let mapEvents: MapEvent[] = [];
+
+    // Only process if we have items
+    if (parsedItems.length > 0) {
+      try {
+        // Detect signals for each item
+        const itemsWithSignals = parsedItems.map(item => ({
+          ...item,
+          signals: detectSignals({
+            id: item.id,
+            title_en: item.title_en,
+            summary_en: item.summary_en,
+            published_at: item.published_at,
+            tags: item.tags,
+          }),
+        }));
+
+        // Filter items that have signals
+        const itemsWithDetectedSignals = itemsWithSignals.filter(
+          item => item.signals.length > 0
+        );
+
+        // Extract map events
+        mapEvents = extractMapEvents(itemsWithDetectedSignals);
+
+        // Sort by severity and recency
+        mapEvents.sort((a, b) => {
+          const severityDiff = b.severity - a.severity;
+          if (severityDiff !== 0) return severityDiff;
+
+          // Sort by time (newer first)
+          return new Date(b.time).getTime() - new Date(a.time).getTime();
+        });
+      } catch (processingError) {
+        console.error('Event processing error:', processingError);
+        // Continue with empty events
+        mapEvents = [];
+      }
+    }
 
     const responseTime = Date.now() - startTime;
 
@@ -95,6 +132,7 @@ export async function GET(request: NextRequest) {
       total: mapEvents.length,
       scope,
       hours,
+      items_analyzed: parsedItems.length,
       response_time_ms: responseTime,
     });
   } catch (error) {
