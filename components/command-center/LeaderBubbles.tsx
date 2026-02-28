@@ -8,6 +8,7 @@ import { LeaderIntelCard } from './LeaderIntelCard';
 import { getCountryPower } from '@/lib/power/getCountryPower';
 import { getFactionPulse, FactionPulse } from '@/lib/pulse/getFactionPulse';
 import { computeReadiness, ReadinessScore } from '@/lib/readiness/computeReadiness';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
 
 interface MilitaryAssets {
   ships: number;
@@ -330,6 +331,7 @@ function getReadinessColor(readiness: number) {
 }
 
 export function LeaderBubbles() {
+  const { t } = useLanguage();
   const [selectedLeader, setSelectedLeader] = useState<string | null>(null);
   const [hoveredLeader, setHoveredLeader] = useState<string | null>(null);
   const [pulseData, setPulseData] = useState<Record<string, FactionPulse | null>>({});
@@ -370,16 +372,16 @@ export function LeaderBubbles() {
     <div className="bg-black/60 border-2 border-green-900/40 p-6">
       {/* Header - C&C Style */}
       <div className="mb-6 pb-4 border-b-2 border-green-900/40">
-        <div className="text-xs text-green-500/60 font-mono tracking-widest mb-2">█ FACTION SELECTION PROTOCOL</div>
+        <div className="text-xs text-green-500/60 font-mono tracking-widest mb-2">█ {t('faction.protocol')}</div>
         <div className="text-2xl font-mono font-bold text-green-400 tracking-wider glow-text mb-2">
-          ▰▰▰ CHOOSE YOUR COMMANDER ▰▰▰
+          ▰▰▰ {t('faction.choose')} ▰▰▰
         </div>
         <div className="flex items-center justify-between">
           <div className="text-xs text-green-500/70 font-mono italic">
-            "The fate of nations rests in your selection..."
+            {t('faction.quote')}
           </div>
           <div className="text-xs text-green-500/60 font-mono bg-black/40 border border-green-900/40 px-3 py-1">
-            HOTKEYS: 1-8
+            {t('faction.hotkeys')}
           </div>
         </div>
       </div>
@@ -451,9 +453,9 @@ export function LeaderBubbles() {
 
               {/* Stance indicator - Bottom banner */}
               <div className="absolute -bottom-2 left-0 right-0 px-2 py-1 bg-gradient-to-r from-black via-gray-900 to-black border-t-2 border-green-700 text-sm font-mono font-bold text-center shadow-lg">
-                {leader.stance === 'aggressive' && <span className="text-red-400">⚔️ AGG</span>}
-                {leader.stance === 'defensive' && <span className="text-blue-400">🛡️ DEF</span>}
-                {leader.stance === 'neutral' && <span className="text-gray-400">⚖️ NEU</span>}
+                {leader.stance === 'aggressive' && <span className="text-red-400">⚔️ {t('stance.aggressive').substring(0, 3).toUpperCase()}</span>}
+                {leader.stance === 'defensive' && <span className="text-blue-400">🛡️ {t('stance.defensive').substring(0, 3).toUpperCase()}</span>}
+                {leader.stance === 'neutral' && <span className="text-gray-400">⚖️ {t('stance.neutral').substring(0, 3).toUpperCase()}</span>}
               </div>
 
               {/* COUNTRY NAME - BIG C&C STYLE */}
@@ -499,28 +501,28 @@ export function LeaderBubbles() {
       {/* Legend */}
       <div className="mt-4 pt-4 border-t border-green-900/40 grid grid-cols-3 gap-4 text-xs font-mono">
         <div>
-          <span className="text-green-500/60">STANCE:</span>
+          <span className="text-green-500/60">{t('stance.label')}</span>
           <div className="mt-1 space-y-1">
-            <div className="text-red-400">⚔️ Aggressive</div>
-            <div className="text-blue-400">🛡️ Defensive</div>
-            <div className="text-gray-400">⚖️ Neutral</div>
+            <div className="text-red-400">⚔️ {t('stance.aggressive')}</div>
+            <div className="text-blue-400">🛡️ {t('stance.defensive')}</div>
+            <div className="text-gray-400">⚖️ {t('stance.neutral')}</div>
           </div>
         </div>
         <div>
-          <span className="text-green-500/60">READINESS:</span>
+          <span className="text-green-500/60">{t('readiness.label')}</span>
           <div className="mt-1 space-y-1">
-            <div className="text-red-400">90-100% MAXIMUM</div>
-            <div className="text-orange-400">75-89% HIGH</div>
-            <div className="text-yellow-400">60-74% MODERATE</div>
+            <div className="text-red-400">90-100% {t('readiness.maximum')}</div>
+            <div className="text-orange-400">75-89% {t('readiness.high')}</div>
+            <div className="text-yellow-400">60-74% {t('readiness.moderate')}</div>
           </div>
         </div>
         <div>
-          <span className="text-green-500/60">RELATIONS:</span>
+          <span className="text-green-500/60">{t('relations.label')}</span>
           <div className="mt-1 space-y-1">
-            <div className="text-green-400">+50 to +100 Allied</div>
-            <div className="text-blue-400">0 to +49 Friendly</div>
-            <div className="text-orange-400">-49 to -1 Tense</div>
-            <div className="text-red-400">-50 to -100 Hostile</div>
+            <div className="text-green-400">+50 to +100 {t('relations.allied')}</div>
+            <div className="text-blue-400">0 to +49 {t('relations.friendly')}</div>
+            <div className="text-orange-400">-49 to -1 {t('relations.tense')}</div>
+            <div className="text-red-400">-50 to -100 {t('relations.hostile')}</div>
           </div>
         </div>
       </div>

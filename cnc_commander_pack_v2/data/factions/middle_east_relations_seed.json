@@ -1,0 +1,44 @@
+[
+  {
+    "a": "israel",
+    "b": "palestine_gaza",
+    "relation": "conflict",
+    "level": "high"
+  },
+  {
+    "a": "israel",
+    "b": "lebanon",
+    "relation": "tension",
+    "level": "high"
+  },
+  {
+    "a": "iran",
+    "b": "israel",
+    "relation": "hostile",
+    "level": "high"
+  },
+  {
+    "a": "saudi_arabia",
+    "b": "iran",
+    "relation": "tension",
+    "level": "medium"
+  },
+  {
+    "a": "turkey",
+    "b": "syria",
+    "relation": "tension",
+    "level": "high"
+  },
+  {
+    "a": "egypt",
+    "b": "palestine_gaza",
+    "relation": "border_management",
+    "level": "high"
+  },
+  {
+    "a": "yemen",
+    "b": "red_sea_shipping",
+    "relation": "security_risk",
+    "level": "high"
+  }
+]

@@ -1,4 +1,4 @@
-import powerData from './country_power_seed.json';
+import { COUNTRY_POWER_DATA } from './country_power_seed';
 
 export interface CountryPower {
   name: string;
@@ -25,7 +25,7 @@ export interface CountryPower {
   updated_at: string;
 }
 
-const typedPowerData = powerData as Record<string, CountryPower>;
+const typedPowerData = COUNTRY_POWER_DATA as Record<string, CountryPower>;
 
 /**
  * Get country power metrics by faction/country code

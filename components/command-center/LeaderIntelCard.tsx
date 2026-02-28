@@ -1,6 +1,7 @@
 'use client';
 
 import { CountryPower, formatPowerMetric } from '@/lib/power/getCountryPower';
+import { useLanguage } from '@/lib/i18n/LanguageContext';
 
 interface LeaderIntelCardProps {
   leader: {
@@ -33,20 +34,22 @@ interface LeaderIntelCardProps {
 }
 
 export function LeaderIntelCard({ leader, power, pulse, readiness }: LeaderIntelCardProps) {
+  const { t } = useLanguage();
+
   const formatTime = (timestamp: number) => {
     const date = new Date(timestamp * 1000);
     const now = Date.now();
     const diff = now - date.getTime();
     const hours = Math.floor(diff / (1000 * 60 * 60));
-    if (hours < 1) return `${Math.floor(diff / (1000 * 60))}m ago`;
-    if (hours < 24) return `${hours}h ago`;
-    return `${Math.floor(hours / 24)}d ago`;
+    if (hours < 1) return `${Math.floor(diff / (1000 * 60))}m ${t('time.ago')}`;
+    if (hours < 24) return `${hours}h ${t('time.ago')}`;
+    return `${Math.floor(hours / 24)}d ${t('time.ago')}`;
   };
 
   const getConfidenceBadge = (score: number) => {
-    if (score >= 0.8) return { label: 'HIGH', color: 'bg-green-600' };
-    if (score >= 0.5) return { label: 'MED', color: 'bg-yellow-600' };
-    return { label: 'LOW', color: 'bg-red-600' };
+    if (score >= 0.8) return { label: t('intel.high'), color: 'bg-green-600' };
+    if (score >= 0.5) return { label: t('intel.med'), color: 'bg-yellow-600' };
+    return { label: t('intel.low'), color: 'bg-red-600' };
   };
 
   return (
@@ -77,22 +80,22 @@ export function LeaderIntelCard({ leader, power, pulse, readiness }: LeaderIntel
         {/* POWER SECTION */}
         {power && (
           <section className="border border-green-500/30 rounded p-2 bg-green-950/10">
-            <h4 className="text-green-400 font-bold mb-2 text-[10px] tracking-wider">▸ POWER METRICS</h4>
+            <h4 className="text-green-400 font-bold mb-2 text-[10px] tracking-wider">▸ {t('intel.power')}</h4>
             <div className="grid grid-cols-2 gap-2 text-green-300/80">
               <div>
-                <span className="text-green-500/60">GFP Rank:</span>{' '}
+                <span className="text-green-500/60">{t('intel.rank')}:</span>{' '}
                 <span className="text-green-400 font-bold">
                   {power.gfp_rank ? `#${power.gfp_rank}` : '—'}
                 </span>
               </div>
               <div>
-                <span className="text-green-500/60">Budget:</span>{' '}
+                <span className="text-green-500/60">{t('intel.budget')}:</span>{' '}
                 <span className="text-green-400 font-bold">
                   {power.budget_usd_b ? `$${power.budget_usd_b}B` : '—'}
                 </span>
               </div>
               <div>
-                <span className="text-green-500/60">Personnel:</span>{' '}
+                <span className="text-green-500/60">{t('intel.personnel')}:</span>{' '}
                 <span className="text-green-400 font-bold">
                   {formatPowerMetric(power.personnel_active_k, 'k')}
                 </span>
@@ -102,27 +105,27 @@ export function LeaderIntelCard({ leader, power, pulse, readiness }: LeaderIntel
             {/* AIR/SEA/LAND Grid */}
             <div className="grid grid-cols-3 gap-1 mt-2 text-[9px]">
               <div className="bg-green-950/30 p-1.5 rounded border border-green-500/20">
-                <div className="text-green-500/60 mb-1">AIR</div>
+                <div className="text-green-500/60 mb-1">{t('intel.air')}</div>
                 <div className="text-green-400">
-                  {formatPowerMetric(power.air.fighters)} FTR
+                  {formatPowerMetric(power.air.fighters)} {t('intel.fighters').substring(0, 3).toUpperCase()}
                 </div>
                 <div className="text-green-400/60">
-                  {formatPowerMetric(power.air.bombers)} BMB
+                  {formatPowerMetric(power.air.bombers)} {t('intel.bombers').substring(0, 3).toUpperCase()}
                 </div>
               </div>
               <div className="bg-green-950/30 p-1.5 rounded border border-green-500/20">
-                <div className="text-green-500/60 mb-1">SEA</div>
+                <div className="text-green-500/60 mb-1">{t('intel.sea')}</div>
                 <div className="text-green-400">
-                  {formatPowerMetric(power.sea.ships)} Ships
+                  {formatPowerMetric(power.sea.ships)} {t('intel.ships')}
                 </div>
                 <div className="text-green-400/60">
-                  {formatPowerMetric(power.sea.subs)} Subs
+                  {formatPowerMetric(power.sea.subs)} {t('intel.subs')}
                 </div>
               </div>
               <div className="bg-green-950/30 p-1.5 rounded border border-green-500/20">
-                <div className="text-green-500/60 mb-1">LAND</div>
+                <div className="text-green-500/60 mb-1">{t('intel.land')}</div>
                 <div className="text-green-400">
-                  {formatPowerMetric(power.land.tanks)} Tanks
+                  {formatPowerMetric(power.land.tanks)} {t('intel.tanks')}
                 </div>
                 <div className="text-green-400/60">
                   {formatPowerMetric(power.land.artillery)} Arty
@@ -134,16 +137,16 @@ export function LeaderIntelCard({ leader, power, pulse, readiness }: LeaderIntel
 
         {/* NOW SECTION */}
         <section className="border border-green-500/30 rounded p-2 bg-green-950/10">
-          <h4 className="text-green-400 font-bold mb-2 text-[10px] tracking-wider">▸ NOW (LAST 6H)</h4>
+          <h4 className="text-green-400 font-bold mb-2 text-[10px] tracking-wider">▸ {t('intel.now')} (LAST 6H)</h4>
           {pulse ? (
             <>
               <div className="flex items-center gap-3 mb-2 text-[10px]">
                 <div>
-                  <span className="text-green-500/60">Events:</span>{' '}
+                  <span className="text-green-500/60">{t('intel.events_6h')}:</span>{' '}
                   <span className="text-green-400 font-bold">{pulse.events_6h_count}</span>
                 </div>
                 <div>
-                  <span className="text-red-400">High:</span>{' '}
+                  <span className="text-red-400">{t('intel.high')}:</span>{' '}
                   <span className="text-red-400 font-bold">{pulse.severity_breakdown.high}</span>
                 </div>
               </div>
@@ -187,18 +190,18 @@ export function LeaderIntelCard({ leader, power, pulse, readiness }: LeaderIntel
 
         {/* HEAT SECTION */}
         <section className="border border-green-500/30 rounded p-2 bg-green-950/10">
-          <h4 className="text-green-400 font-bold mb-2 text-[10px] tracking-wider">▸ HEAT</h4>
+          <h4 className="text-green-400 font-bold mb-2 text-[10px] tracking-wider">▸ {t('intel.heat')}</h4>
           {pulse ? (
             <div className="space-y-2">
               <div className="grid grid-cols-2 gap-2 text-[10px]">
                 <div>
-                  <span className="text-green-500/60">Velocity:</span>{' '}
+                  <span className="text-green-500/60">{t('intel.velocity')}:</span>{' '}
                   <span className="text-green-400 font-bold">
                     {pulse.events_6h_count} / {pulse.events_24h_count}
                   </span>
                 </div>
                 <div>
-                  <span className="text-green-500/60">Confidence:</span>{' '}
+                  <span className="text-green-500/60">{t('intel.confidence')}:</span>{' '}
                   <span
                     className={`px-1.5 py-0.5 rounded text-black font-bold ${
                       getConfidenceBadge(pulse.confidence_score).color
@@ -211,7 +214,7 @@ export function LeaderIntelCard({ leader, power, pulse, readiness }: LeaderIntel
 
               {/* Severity Bar */}
               <div>
-                <div className="text-green-500/60 text-[9px] mb-1">Severity Mix</div>
+                <div className="text-green-500/60 text-[9px] mb-1">{t('intel.severity')} Mix</div>
                 <div className="flex gap-1 h-2">
                   <div
                     className="bg-red-500"
@@ -241,9 +244,9 @@ export function LeaderIntelCard({ leader, power, pulse, readiness }: LeaderIntel
 
         {/* RELATIONS SECTION */}
         <section className="border border-green-500/30 rounded p-2 bg-green-950/10">
-          <h4 className="text-green-400 font-bold mb-2 text-[10px] tracking-wider">▸ RELATIONS</h4>
+          <h4 className="text-green-400 font-bold mb-2 text-[10px] tracking-wider">▸ {t('intel.relations')}</h4>
           <div className="text-green-500/40 text-center py-2 text-[10px]">
-            Analyzing diplomatic signals...
+            {t('intel.no_data')}
           </div>
         </section>
 
@@ -251,33 +254,36 @@ export function LeaderIntelCard({ leader, power, pulse, readiness }: LeaderIntel
         {readiness && (
           <section className="border border-green-500/30 rounded p-2 bg-green-950/10">
             <h4 className="text-green-400 font-bold mb-2 text-[10px] tracking-wider">
-              ▸ WHY THIS SCORE ({readiness.readiness_score}%)
+              ▸ {t('intel.why')} ({readiness.readiness_score}%)
             </h4>
 
             {/* Breakdown Bars */}
             <div className="space-y-1.5 mb-2">
-              {Object.entries(readiness.breakdown).map(([key, value]) => (
-                <div key={key}>
-                  <div className="flex justify-between text-[9px] mb-0.5">
-                    <span className="text-green-500/60 uppercase">{key}</span>
-                    <span className="text-green-400 font-bold">{value}</span>
+              {Object.entries(readiness.breakdown).map(([key, value]) => {
+                const translationKey = `intel.${key}` as any;
+                return (
+                  <div key={key}>
+                    <div className="flex justify-between text-[9px] mb-0.5">
+                      <span className="text-green-500/60 uppercase">{t(translationKey)}</span>
+                      <span className="text-green-400 font-bold">{value}</span>
+                    </div>
+                    <div className="h-1.5 bg-black/60 rounded overflow-hidden">
+                      <div
+                        className="h-full bg-green-500"
+                        style={{
+                          width: `${(value / 25) * 100}%`,
+                        }}
+                      />
+                    </div>
                   </div>
-                  <div className="h-1.5 bg-black/60 rounded overflow-hidden">
-                    <div
-                      className="h-full bg-green-500"
-                      style={{
-                        width: `${(value / 25) * 100}%`,
-                      }}
-                    />
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             {/* Top Signals */}
             {pulse?.top_signals && pulse.top_signals.length > 0 && (
               <div className="space-y-1.5 mt-2">
-                <div className="text-green-500/60 text-[9px]">TOP SIGNALS:</div>
+                <div className="text-green-500/60 text-[9px]">{t('intel.top_signals')}:</div>
                 {pulse.top_signals.slice(0, 3).map((signal, idx) => (
                   <div key={idx} className="bg-black/40 p-1.5 rounded border border-green-500/20">
                     <div className="flex justify-between items-center mb-1">

@@ -1,5 +1,5 @@
-{
-  "IL": {
+export const COUNTRY_POWER_DATA = {
+  IL: {
     "name": "Israel",
     "gfp_rank": 18,
     "budget_usd_b": 23.4,
