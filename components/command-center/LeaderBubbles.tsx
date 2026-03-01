@@ -574,7 +574,7 @@ export function LeaderBubbles() {
           {loadingPulseData[hoveredLeaderId] ? (
             // Loading state popup
             <div
-              className="fixed w-[380px] h-[480px] bg-black/98 border-2 border-green-500 rounded-lg shadow-2xl shadow-green-500/50 font-mono text-xs overflow-hidden flex items-center justify-center"
+              className="fixed w-[380px] h-[520px] bg-black/98 border-2 border-green-500 rounded-lg shadow-2xl shadow-green-500/50 font-mono text-xs overflow-hidden flex items-center justify-center"
               style={{
                 left: placement.x,
                 top: placement.y,

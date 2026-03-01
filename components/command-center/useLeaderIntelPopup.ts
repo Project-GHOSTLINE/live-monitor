@@ -104,7 +104,7 @@ const HOVER_DEBOUNCE_MS = 120;
 export function useLeaderIntelPopup(): UseLeaderIntelPopupReturn {
   const [hoveredLeaderId, setHoveredLeaderId] = useState<string | null>(null);
   const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null);
-  const [popupSize, setPopupSize] = useState<PopupSize>({ width: 380, height: 480 });
+  const [popupSize, setPopupSize] = useState<PopupSize>({ width: 380, height: 520 });
   const [placement, setPlacement] = useState<PopupPlacement | null>(null);
 
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);

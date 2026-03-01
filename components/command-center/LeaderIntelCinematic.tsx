@@ -5,6 +5,7 @@ import { CountryPower } from '@/lib/power/getCountryPower';
 import { FactionPulse } from '@/lib/pulse/getFactionPulse';
 import { ReadinessScore } from '@/lib/readiness/computeReadiness';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
+import { NewsItemTooltip } from './NewsItemTooltip';
 
 interface LeaderIntelCinematicProps {
   leaderId: string;
@@ -107,10 +108,10 @@ export function LeaderIntelCinematic({
 
   // Conditional styles based on mode
   const containerClassName = mode === 'floating'
-    ? `fixed z-[9999] w-[380px] h-[480px] bg-black/98 border-2 border-green-500 rounded-lg shadow-2xl shadow-green-500/50 font-mono text-xs overflow-hidden transition-all duration-150 ease-out origin-left ${
+    ? `fixed z-[9999] w-[380px] h-[520px] bg-black/98 border-2 border-green-500 rounded-lg shadow-2xl shadow-green-500/50 font-mono text-xs overflow-hidden transition-all duration-150 ease-out origin-left ${
         isAnimating ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
       }`
-    : 'relative w-full max-w-[420px] h-[480px] bg-black/98 border-2 border-green-500 rounded-lg shadow-2xl shadow-green-500/50 font-mono text-xs overflow-hidden';
+    : 'relative w-full max-w-[420px] h-[520px] bg-black/98 border-2 border-green-500 rounded-lg shadow-2xl shadow-green-500/50 font-mono text-xs overflow-hidden';
 
   const containerStyle = mode === 'floating'
     ? {
@@ -269,60 +270,98 @@ export function LeaderIntelCinematic({
             </div>
           </div>
 
-          {/* Active Incidents - Showing 5 latest */}
+          {/* Active Incidents - Showing 5 latest with ENRICHED details */}
           <div className="border border-green-500/30 rounded p-2 bg-gradient-to-br from-green-950/20 to-black/20">
             <div className="flex items-center justify-between mb-1.5">
               <h4 className="text-green-400 font-bold text-[10px] tracking-wider uppercase">
-                ▸ Active Incidents
+                ▸ Live Intel Feed
               </h4>
               {pulse && pulse.latest_items.length > 0 && (
-                <span className="text-green-500/60 text-[8px] font-mono">
-                  {pulse.latest_items.length}/{pulse.events_6h_count} shown
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-red-400 text-[8px] font-mono animate-pulse">🔴 LIVE</span>
+                  <span className="text-green-500/60 text-[8px] font-mono">
+                    {pulse.latest_items.length}/{pulse.events_6h_count}
+                  </span>
+                </div>
               )}
             </div>
             <div className="space-y-1.5 max-h-[180px] overflow-y-auto scrollbar-thin scrollbar-thumb-green-500/30 scrollbar-track-transparent">
-              {pulse?.latest_items.slice(0, 5).map((item, idx) => (
-                <a
-                  key={idx}
-                  href={item.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block cursor-pointer hover:bg-green-500/10 bg-black/20 p-1.5 rounded transition-colors border border-green-500/10 hover:border-green-500/30"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    window.open(item.url, '_blank', 'noopener,noreferrer');
-                    onIncidentClick?.(String(idx));
-                  }}
-                >
-                  <div className="flex items-start gap-1.5 mb-0.5">
-                    <span className="text-red-400 flex-shrink-0 mt-0.5">⚡</span>
-                    <div className="flex-1 min-w-0">
-                      <h5 className="text-green-200 font-bold text-[11px] leading-tight mb-0.5" style={{ textShadow: '0 0 4px rgba(34,197,94,0.4)' }}>
-                        {item.title}
-                      </h5>
-                      {item.description && (
-                        <p className="text-green-500/70 text-[9px] leading-snug line-clamp-2">
-                          {item.description}
-                        </p>
-                      )}
-                    </div>
-                    <span className="text-green-500/60 flex-shrink-0 font-mono text-[9px]">
-                      {formatTime(item.time)}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-1 ml-5 mt-0.5">
-                    <span className="text-green-500/40 text-[8px]">
-                      {item.source}
-                    </span>
-                    {item.tags && item.tags.length > 0 && (
-                      <span className="text-green-500/30 text-[8px]">
-                        • {item.tags.slice(0, 2).join(', ')}
-                      </span>
-                    )}
-                  </div>
-                </a>
-              )) || (
+              {pulse?.latest_items.slice(0, 5).map((item, idx) => {
+                const now = Math.floor(Date.now() / 1000);
+                const ageMinutes = Math.floor((now - item.time) / 60);
+                const isLive = ageMinutes < 60;
+
+                return (
+                  <NewsItemTooltip key={item.id || idx} item={item} formatTime={formatTime}>
+                    <a
+                      href={item.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block cursor-pointer hover:bg-green-500/10 bg-black/20 p-1.5 rounded transition-colors border border-green-500/10 hover:border-green-500/30"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        window.open(item.url, '_blank', 'noopener,noreferrer');
+                        onIncidentClick?.(String(item.id || idx));
+                      }}
+                    >
+                      <div className="flex items-start gap-1.5 mb-0.5">
+                        {isLive ? (
+                          <span className="text-red-500 flex-shrink-0 mt-0.5 animate-pulse">🔴</span>
+                        ) : (
+                          <span className="text-orange-400 flex-shrink-0 mt-0.5">⚡</span>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start gap-2 mb-0.5">
+                            <h5 className="text-green-200 font-bold text-[11px] leading-tight flex-1" style={{ textShadow: '0 0 4px rgba(34,197,94,0.4)' }}>
+                              {item.title}
+                            </h5>
+                            {/* Reliability Badge */}
+                            <span className={`flex-shrink-0 px-1.5 py-0.5 text-[8px] font-bold rounded ${
+                              item.reliability >= 8 ? 'bg-green-500/20 text-green-400 border border-green-500/40' :
+                              item.reliability >= 5 ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/40' :
+                              'bg-orange-500/20 text-orange-400 border border-orange-500/40'
+                            }`}>
+                              {item.reliability}/10
+                            </span>
+                          </div>
+                          {item.description && (
+                            <p className="text-green-500/70 text-[9px] leading-snug line-clamp-2">
+                              {item.description}
+                            </p>
+                          )}
+                        </div>
+                        <span className="text-green-500/60 flex-shrink-0 font-mono text-[9px]">
+                          {formatTime(item.time)}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1.5 ml-5 mt-0.5 flex-wrap">
+                        <span className="text-green-500/40 text-[8px]">
+                          📡 {item.source}
+                        </span>
+                        {item.entity_places && item.entity_places.length > 0 && (
+                          <>
+                            <span className="text-green-500/30 text-[8px]">•</span>
+                            <span className="text-cyan-400/60 text-[8px]">
+                              📍 {item.entity_places.slice(0, 2).join(', ')}
+                            </span>
+                          </>
+                        )}
+                        {item.tags && item.tags.length > 0 && (
+                          <>
+                            <span className="text-green-500/30 text-[8px]">•</span>
+                            <span className="text-yellow-400/60 text-[8px]">
+                              🏷️ {item.tags.slice(0, 2).join(', ')}
+                            </span>
+                          </>
+                        )}
+                      </div>
+                      <div className="ml-5 mt-1 text-[8px] text-green-500/40 italic">
+                        💡 Hover for full details
+                      </div>
+                    </a>
+                  </NewsItemTooltip>
+                );
+              }) || (
                 <div className="text-green-500/40 text-center py-2 text-[10px]">
                   No recent incidents
                 </div>

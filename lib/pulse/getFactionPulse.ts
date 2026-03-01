@@ -12,12 +12,18 @@ export interface FactionPulse {
     low: number;
   };
   latest_items: Array<{
+    id: number;
     title: string;
     description?: string;
+    content?: string;
     source: string;
     time: number;
     url: string;
     tags: string[];
+    reliability: number;
+    entity_places?: string[];
+    entity_orgs?: string[];
+    lang: string;
   }>;
   trending_topics: string[];
   top_signals: Array<{
@@ -90,12 +96,18 @@ export async function getFactionPulse(
       events_24h_count: items24h.length,
       severity_breakdown: severity,
       latest_items: items6h.slice(0, 5).map((item: any) => ({
+        id: item.id,
         title: item.title_en || item.title_original,
-        description: item.summary_en || item.content_original?.substring(0, 150),
+        description: item.summary_en || item.content_original?.substring(0, 200),
+        content: item.content_original,
         source: item.source_name,
         time: item.published_at,
         url: item.canonical_url || item.source_url,
         tags: item.tags || [],
+        reliability: item.reliability || 5,
+        entity_places: item.entity_places || [],
+        entity_orgs: item.entity_orgs || [],
+        lang: item.lang || 'en',
       })),
       trending_topics: trending,
       top_signals: [],
