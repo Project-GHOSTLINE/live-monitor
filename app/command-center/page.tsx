@@ -6,6 +6,7 @@ import { MilitaryForces } from '@/components/scenarios/MilitaryForces';
 import { LeaderBubbles } from '@/components/command-center/LeaderBubbles';
 import { EvidenceDrawer } from '@/components/command-center/EvidenceDrawer';
 import { TheaterMap } from '@/components/command-center/TheaterMap';
+import { TacticalMapEnhanced } from '@/components/command-center/TacticalMapEnhanced';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
 import { ScenarioScore } from '@/types/scenario';
@@ -182,10 +183,14 @@ export default function CommandCenterPage() {
             </div>
           </div>
 
-          {/* Theater Map - C&C Style */}
+          {/* GLOBAL THEATER MAP - Enhanced Tactical Map with Replay Controls */}
           <div className="bg-black/60 border-b-2 border-green-900/40 p-4">
             <div className="max-w-[2000px] mx-auto">
-              <TheaterMap />
+              <div className="flex items-center gap-2 mb-3">
+                <div className="text-xs text-green-500/80 font-mono tracking-widest">GLOBAL THEATER MAP</div>
+                <div className="flex-1 h-px bg-green-900/40" />
+              </div>
+              <TacticalMapEnhanced />
             </div>
           </div>
 
