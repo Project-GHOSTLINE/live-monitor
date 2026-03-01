@@ -1,10 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import Image from 'next/image';
 import { IntelPopover } from './IntelPopover';
 import { LeaderModal } from './LeaderModal';
-import { LeaderIntelCard } from './LeaderIntelCard';
+import { LeaderIntelCinematic } from './LeaderIntelCinematic';
+import { LeaderIntelDrawer } from './LeaderIntelDrawer';
+import { LeaderDetailSplit } from './LeaderDetailSplit';
+import { useLeaderIntelPopup } from './useLeaderIntelPopup';
 import { getCountryPower } from '@/lib/power/getCountryPower';
 import { getFactionPulse, FactionPulse } from '@/lib/pulse/getFactionPulse';
 import { computeReadiness, ReadinessScore } from '@/lib/readiness/computeReadiness';
@@ -333,31 +337,56 @@ function getReadinessColor(readiness: number) {
 export function LeaderBubbles() {
   const { t } = useLanguage();
   const [selectedLeader, setSelectedLeader] = useState<string | null>(null);
-  const [hoveredLeader, setHoveredLeader] = useState<string | null>(null);
+  const [selectedLeaderForDetail, setSelectedLeaderForDetail] = useState<string | null>(null);
   const [pulseData, setPulseData] = useState<Record<string, FactionPulse | null>>({});
   const [readinessData, setReadinessData] = useState<Record<string, ReadinessScore | null>>({});
+  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
+  const [mobileDrawerLeader, setMobileDrawerLeader] = useState<string | null>(null);
+  const [isMounted, setIsMounted] = useState(false);
 
-  // Load pulse data when leader is hovered
+  // Popup state management
+  const {
+    hoveredLeaderId,
+    placement,
+    isOpen,
+    handleHoverStart,
+    handleHoverEnd,
+  } = useLeaderIntelPopup();
+
+  // Handle SSR - only render portal on client
   useEffect(() => {
-    if (hoveredLeader && !pulseData[hoveredLeader]) {
-      getFactionPulse(hoveredLeader).then(pulse => {
-        setPulseData(prev => ({ ...prev, [hoveredLeader]: pulse }));
+    setIsMounted(true);
+  }, []);
+
+  // Load pulse data when leader is hovered OR selected for detail
+  useEffect(() => {
+    const targetLeaderId = selectedLeaderForDetail || hoveredLeaderId;
+    if (targetLeaderId && !pulseData[targetLeaderId]) {
+      getFactionPulse(targetLeaderId).then(pulse => {
+        setPulseData(prev => ({ ...prev, [targetLeaderId]: pulse }));
         if (pulse) {
           const readiness = computeReadiness(pulse);
-          setReadinessData(prev => ({ ...prev, [hoveredLeader]: readiness }));
+          setReadinessData(prev => ({ ...prev, [targetLeaderId]: readiness }));
         }
       });
     }
-  }, [hoveredLeader]);
+  }, [hoveredLeaderId, selectedLeaderForDetail, pulseData]);
 
   const selected = WORLD_LEADERS.find(l => l.countryCode === selectedLeader);
 
-  // Keyboard hotkeys: 1-8 for leader selection
+  // Keyboard hotkeys: 1-8 for leader selection + ESC to close split-view
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
       const key = e.key;
-      const index = parseInt(key) - 1;
 
+      // ESC closes split-view
+      if (key === 'Escape' && selectedLeaderForDetail) {
+        setSelectedLeaderForDetail(null);
+        return;
+      }
+
+      // Number keys select leader
+      const index = parseInt(key) - 1;
       if (index >= 0 && index < WORLD_LEADERS.length) {
         const leader = WORLD_LEADERS[index];
         setSelectedLeader(leader.countryCode === selectedLeader ? null : leader.countryCode);
@@ -366,10 +395,13 @@ export function LeaderBubbles() {
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [selectedLeader]);
+  }, [selectedLeader, selectedLeaderForDetail]);
 
   return (
     <div className="bg-black/60 border-2 border-green-900/40 p-6">
+      {/* Hide grid when split-view is active */}
+      {selectedLeaderForDetail ? null : (
+        <>
       {/* Header - C&C Style */}
       <div className="mb-6 pb-4 border-b-2 border-green-900/40">
         <div className="text-xs text-green-500/60 font-mono tracking-widest mb-2">█ {t('faction.protocol')}</div>
@@ -391,9 +423,20 @@ export function LeaderBubbles() {
         {WORLD_LEADERS.map((leader) => (
           <button
             key={leader.countryCode}
-            onClick={() => setSelectedLeader(leader.countryCode === selectedLeader ? null : leader.countryCode)}
-            onMouseEnter={() => setHoveredLeader(leader.countryCode)}
-            onMouseLeave={() => setHoveredLeader(null)}
+            data-leader-id={leader.countryCode}
+            onClick={(e) => {
+              // Mobile: Open drawer
+              if (window.innerWidth < 768) {
+                setMobileDrawerLeader(leader.countryCode);
+                setIsMobileDrawerOpen(true);
+                return;
+              }
+
+              // Desktop: Open split-view detail
+              setSelectedLeaderForDetail(leader.countryCode);
+            }}
+            onMouseEnter={(e) => handleHoverStart(leader.countryCode, e.currentTarget)}
+            onMouseLeave={handleHoverEnd}
             className={`relative group transition-all transform hover:scale-105 ${
               selectedLeader === leader.countryCode
                 ? 'ring-4 ring-yellow-400 scale-105 z-10'
@@ -472,24 +515,86 @@ export function LeaderBubbles() {
         ))}
       </div>
 
-      {/* Advanced Intel Card - Rendered outside buttons */}
-      {hoveredLeader && (
-        <div className="fixed top-20 left-6 z-50">
-          <LeaderIntelCard
-            leader={{
-              code: hoveredLeader,
-              name: WORLD_LEADERS.find(l => l.countryCode === hoveredLeader)?.country || hoveredLeader,
-              faction: hoveredLeader,
-              stance: WORLD_LEADERS.find(l => l.countryCode === hoveredLeader)?.stance || 'neutral',
-              readiness: readinessData[hoveredLeader]?.readiness_score ||
-                         WORLD_LEADERS.find(l => l.countryCode === hoveredLeader)?.readiness || 0,
+      {/* Cinematic Intel Popup - Rendered to body via portal (hidden when split-view active) */}
+      {!selectedLeaderForDetail && isMounted && isOpen && hoveredLeaderId && placement && createPortal(
+        <div
+          onMouseEnter={() => {
+            // Cancel any pending hover end when entering popup
+            const anchorEl = document.querySelector(`[data-leader-id="${hoveredLeaderId}"]`) as HTMLElement;
+            if (anchorEl) {
+              handleHoverStart(hoveredLeaderId, anchorEl);
+            }
+          }}
+          onMouseLeave={handleHoverEnd}
+          style={{ zIndex: 9999 }}
+        >
+          <LeaderIntelCinematic
+            leaderId={hoveredLeaderId}
+            leaderName={WORLD_LEADERS.find(l => l.countryCode === hoveredLeaderId)?.country || hoveredLeaderId}
+            readinessScore={
+              readinessData[hoveredLeaderId]?.readiness_score ||
+              WORLD_LEADERS.find(l => l.countryCode === hoveredLeaderId)?.readiness ||
+              0
+            }
+            readinessDelta={0} // TODO: calculate delta from previous value
+            anchorRect={placement}
+            isLocked={false}
+            onClose={() => {}} // No close handler needed for hover-only mode
+            onIncidentClick={(incidentId) => {
+              // TODO: Open incident details modal
+              if (process.env.NODE_ENV === 'development') {
+                console.log('Incident clicked:', incidentId);
+              }
             }}
-            power={getCountryPower(hoveredLeader)}
-            pulse={pulseData[hoveredLeader] || undefined}
-            readiness={readinessData[hoveredLeader] || undefined}
+            power={getCountryPower(hoveredLeaderId)}
+            pulse={pulseData[hoveredLeaderId] || null}
+            readiness={readinessData[hoveredLeaderId] || null}
           />
-        </div>
+        </div>,
+        document.body
       )}
+
+      {/* Mobile Drawer Variant (Mobile Only) */}
+      {mobileDrawerLeader && (
+        <LeaderIntelDrawer
+          isOpen={isMobileDrawerOpen}
+          onClose={() => {
+            setIsMobileDrawerOpen(false);
+            setMobileDrawerLeader(null);
+          }}
+          leader={{
+            code: mobileDrawerLeader,
+            name: WORLD_LEADERS.find(l => l.countryCode === mobileDrawerLeader)?.country || mobileDrawerLeader,
+            faction: WORLD_LEADERS.find(l => l.countryCode === mobileDrawerLeader)?.title || '',
+            stance: WORLD_LEADERS.find(l => l.countryCode === mobileDrawerLeader)?.stance || 'neutral',
+            readiness: readinessData[mobileDrawerLeader]?.readiness_score ||
+              WORLD_LEADERS.find(l => l.countryCode === mobileDrawerLeader)?.readiness ||
+              0,
+          }}
+          power={getCountryPower(mobileDrawerLeader)}
+          pulse={pulseData[mobileDrawerLeader] || undefined}
+          readiness={readinessData[mobileDrawerLeader] || undefined}
+        />
+      )}
+
+      {/* Leader Detail Split-View (Desktop) */}
+      {selectedLeaderForDetail && (() => {
+        const leaderForDetail = WORLD_LEADERS.find(l => l.countryCode === selectedLeaderForDetail);
+        return leaderForDetail ? (
+          <LeaderDetailSplit
+            leader={leaderForDetail}
+            power={getCountryPower(selectedLeaderForDetail)}
+            pulse={pulseData[selectedLeaderForDetail] || null}
+            readiness={readinessData[selectedLeaderForDetail] || null}
+            onClose={() => setSelectedLeaderForDetail(null)}
+            onIncidentClick={(incidentId) => {
+              if (process.env.NODE_ENV === 'development') {
+                console.log('Incident clicked:', incidentId);
+              }
+            }}
+          />
+        ) : null;
+      })()}
 
       {/* Leader Modal - AAA 2026 Gamer UI */}
       <LeaderModal
@@ -498,7 +603,8 @@ export function LeaderBubbles() {
         onClose={() => setSelectedLeader(null)}
       />
 
-      {/* Legend */}
+      {/* Legend - Hidden when split-view is active */}
+      {!selectedLeaderForDetail && (
       <div className="mt-4 pt-4 border-t border-green-900/40 grid grid-cols-3 gap-4 text-xs font-mono">
         <div>
           <span className="text-green-500/60">{t('stance.label')}</span>
@@ -526,6 +632,7 @@ export function LeaderBubbles() {
           </div>
         </div>
       </div>
+      )}
 
       <style jsx>{`
         @keyframes fade-in {
