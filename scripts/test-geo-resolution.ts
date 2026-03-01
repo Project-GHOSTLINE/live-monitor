@@ -184,7 +184,7 @@ strategicEvents.forEach(item => {
       if (!clusters.has(key)) {
         clusters.set(key, {
           location: best.name,
-          country: best.country,
+          country: best.country || 'Unknown',
           events: [],
           strategic: best.strategic || false,
         });

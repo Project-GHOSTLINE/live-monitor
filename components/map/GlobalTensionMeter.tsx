@@ -18,7 +18,7 @@ import { MapEvent } from '@/lib/signals/signalTypes';
 
 interface GlobalTensionMeterProps {
   events: MapEvent[];
-  timeWindow?: '1h' | '6h' | '24h';
+  timeWindow?: '1h' | '6h' | '24h' | '7d';
   className?: string;
 }
 

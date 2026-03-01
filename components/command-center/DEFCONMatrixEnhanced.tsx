@@ -147,7 +147,7 @@ export function DEFCONMatrixEnhanced({ onOpenEvidence }: DEFCONMatrixEnhancedPro
   const relations = Object.values(uniqueRelations);
 
   // Feature disabled state
-  if (relationsError?.message === 'STATE_ENGINE_DISABLED' || globalData === undefined && !globalLoading) {
+  if ((relationsError && 'message' in relationsError && relationsError.message === 'STATE_ENGINE_DISABLED') || (globalData === undefined && !globalLoading)) {
     return (
       <div className="bg-black/40 border-2 border-gray-600/40 p-6">
         <div className="text-center text-gray-500 font-mono space-y-3">
