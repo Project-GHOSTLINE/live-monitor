@@ -417,6 +417,65 @@ function calculateZIndex(
 }
 
 /**
+ * Calculate gameplay score for an event
+ *
+ * Scoring formula: (severity × confidence × action_type_multiplier) × 100
+ * Used for ranking events by tactical importance in gameplay context
+ *
+ * Score ranges:
+ * - 90-100: Critical tactical events (missile strikes, high severity, verified)
+ * - 70-89: High importance events (major kinetic actions)
+ * - 50-69: Medium importance (tactical operations)
+ * - 30-49: Low importance (minor incidents)
+ * - 0-29: Minimal importance (unverified or minimal severity)
+ */
+export function calculateGameplayScore(
+  severity: EventSeverity,
+  confidence: number,
+  actionType: MapActionType
+): number {
+  // Convert severity to 0-1 scale
+  const severityScore: Record<EventSeverity, number> = {
+    critical: 1.0,
+    high: 0.8,
+    medium: 0.6,
+    low: 0.4,
+    minimal: 0.2,
+  };
+
+  // Action type tactical multiplier
+  const actionMultiplier: Record<MapActionType, number> = {
+    TRAJECTORY_MISSILE: 1.0,      // Highest tactical importance
+    AREA_SHELLING: 0.95,
+    PULSE_STRIKE: 0.9,
+    NAVAL_STRIKE: 0.85,
+    TRAJECTORY_DRONE: 0.8,
+    AIR_DEFENSE: 0.75,
+    GROUND_MOVEMENT: 0.7,
+    CYBER_INDICATOR: 0.65,
+    PROTEST_MARKER: 0.4,
+    DIPLOMATIC_ICON: 0.3,
+    INCIDENT_MARKER: 0.2,
+  };
+
+  const score =
+    severityScore[severity] * confidence * actionMultiplier[actionType] * 100;
+
+  return Math.round(score);
+}
+
+/**
+ * Map database severity (1-10) to EventSeverity enum
+ */
+export function mapDatabaseSeverity(dbSeverity: number): EventSeverity {
+  if (dbSeverity >= 9) return 'critical';
+  if (dbSeverity >= 7) return 'high';
+  if (dbSeverity >= 5) return 'medium';
+  if (dbSeverity >= 3) return 'low';
+  return 'minimal';
+}
+
+/**
  * Batch convert multiple EventFrames to MapActions
  */
 export function batchEventFramesToMapActions(

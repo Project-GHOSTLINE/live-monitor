@@ -3,6 +3,14 @@
     {
       "path": "/api/ingest",
       "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cron/state-live",
+      "schedule": "*/15 * * * *"
+    },
+    {
+      "path": "/api/cron/state-daily",
+      "schedule": "0 0 * * *"
     }
   ]
 }

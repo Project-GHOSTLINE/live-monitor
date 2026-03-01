@@ -1,40 +1,66 @@
-# Scenario Analysis Database Schema
+# Database Migrations
 
-Comprehensive database schema for conflict scenario analysis, event extraction, signal detection, and impact assessment.
+Comprehensive database schema for WW3 Monitor including event processing, state management, and scenario analysis.
 
-## Schema Overview
+**Last Updated**: 2026-02-28
+**Status**: Production Ready
 
-### Database Tables
+## Migration Overview
 
-1. **event_frames** - Structured events extracted from news feed items
-2. **signals** - Normalized signal definitions with weights and decay
-3. **signal_activations** - Records when signals are detected
-4. **scenario_definitions** - Templates defining conflict scenarios
-5. **scenario_scores** - Historical time-series scoring data
-6. **impact_matrix** - Impact assessments by scenario and domain
-7. **scenario_changelog** - Audit trail of scenario changes
+| Migration | SQLite File | Supabase File | Status | Tables Created |
+|-----------|-------------|---------------|--------|----------------|
+| 001 | `001_initial.sql` | ✅ Applied | Complete | sources, feed_items, clusters, translation_cache, ingestion_logs |
+| 002 | N/A | `002_scenario_analysis.sql` | Complete | Full scenario analysis system (Supabase only) |
+| 003 | `003_event_processing_sqlite.sql` | `003_event_processing_supabase.sql` | ✅ Ready | event_frames, signals, signal_activations, scenario_definitions |
+| 004 | `004_state_management_sqlite.sql` | `004_state_management_supabase.sql` | ✅ Ready | world_state_live, world_state_daily, relation_edges |
 
-## Installation
+## Quick Start
 
-### Step 1: Run Base Schema (if not already done)
+### Development (SQLite)
 
-```sql
--- In Supabase SQL Editor
-\i supabase-schema.sql
+```bash
+# Apply all migrations
+sqlite3 data/monitor.db < lib/db/migrations/001_initial.sql
+sqlite3 data/monitor.db < lib/db/migrations/003_event_processing_sqlite.sql
+sqlite3 data/monitor.db < lib/db/migrations/004_state_management_sqlite.sql
+
+# Or run test script
+npx ts-node lib/db/migrations/test-migrations.ts
 ```
 
-### Step 2: Run Scenario Analysis Schema
+### Production (Supabase)
 
-```sql
--- In Supabase SQL Editor
-\i 002_scenario_analysis.sql
-```
+1. Open Supabase SQL Editor
+2. Run `003_event_processing_supabase.sql`
+3. Run `004_state_management_supabase.sql`
+4. Verify tables created successfully
 
-This will create:
-- All 7 tables with proper indexes
-- Utility functions for signal decay and score calculation
-- Seed data for common signals
-- Sample scenario definitions
+**Detailed Instructions**: See [`docs/migrations-runbook.md`](/docs/migrations-runbook.md)
+
+## Database Tables (After All Migrations)
+
+### Core Tables (Migration 001)
+- **sources** - RSS feed sources
+- **feed_items** - Ingested news items
+- **clusters** - Related items grouped together
+- **translation_cache** - Cached translations
+- **ingestion_logs** - Ingestion audit trail
+
+### Event Processing (Migration 003)
+- **event_frames** - Structured events extracted from feed items
+- **signals** - Signal definitions with weights and decay (19 seeded)
+- **signal_activations** - Active signal instances
+- **scenario_definitions** - Scenario templates (3 seeded)
+
+### State Management (Migration 004)
+- **world_state_live** - Current global state (singleton, id=1)
+- **world_state_daily** - Historical daily snapshots
+- **relation_edges** - Country relationship graph
+
+### Scenario Analysis (Migration 002 - Supabase only)
+- **scenario_scores** - Historical time-series scoring data
+- **impact_matrix** - Impact assessments by domain
+- **scenario_changelog** - Audit trail of changes
 
 ## Table Details
 

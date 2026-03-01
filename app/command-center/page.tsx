@@ -7,8 +7,12 @@ import { LeaderBubbles } from '@/components/command-center/LeaderBubbles';
 import { EvidenceDrawer } from '@/components/command-center/EvidenceDrawer';
 import { TheaterMap } from '@/components/command-center/TheaterMap';
 import { TacticalMapEnhanced } from '@/components/command-center/TacticalMapEnhanced';
+import { CinematicIntelPanel } from '@/components/command-center/CinematicIntelPanel';
+import { DEFCONMatrixEnhanced } from '@/components/command-center/DEFCONMatrixEnhanced';
+import { TimelineReplayControls } from '@/components/command-center/TimelineReplayControls';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
+import { useFeature } from '@/lib/features/FeatureFlagContext';
 import { ScenarioScore } from '@/types/scenario';
 import { useState, useEffect } from 'react';
 
@@ -69,6 +73,10 @@ export default function CommandCenterPage() {
     target?: string;
     title?: string;
   }>({ isOpen: false });
+
+  // Feature flags
+  const stateEngineEnabled = useFeature('STATE_ENABLED');
+  const mapEnhancementsEnabled = useFeature('MAP_ENABLED');
 
   useEffect(() => {
     const interval = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -191,11 +199,46 @@ export default function CommandCenterPage() {
                 <div className="flex-1 h-px bg-green-900/40" />
               </div>
               <TacticalMapEnhanced />
+
+              {/* Timeline Replay Controls - Feature Flagged */}
+              {mapEnhancementsEnabled && (
+                <div className="mt-4">
+                  <TimelineReplayControls />
+                </div>
+              )}
             </div>
           </div>
 
-          {/* DEFCON Matrix - Country Aggression */}
-          <div className="bg-black/60 border-b-2 border-red-900/40 p-4">
+          {/* Cinematic Intel Panel - NEW - Feature Flagged */}
+          {stateEngineEnabled && (
+            <div className="bg-black/60 border-b-2 border-green-900/40 p-4">
+              <div className="max-w-[2000px] mx-auto">
+                <CinematicIntelPanel
+                  onOpenEvidence={(country, eventIds) =>
+                    setEvidenceDrawer({
+                      isOpen: true,
+                      title: `${country} - Supporting Events`,
+                    })
+                  }
+                />
+              </div>
+            </div>
+          )}
+
+          {/* DEFCON Matrix - Enhanced with State Engine or Original */}
+          {stateEngineEnabled ? (
+            <DEFCONMatrixEnhanced
+              onOpenEvidence={(country, target, eventIds) =>
+                setEvidenceDrawer({
+                  isOpen: true,
+                  country,
+                  target,
+                  title: `${country} → ${target} Evidence`,
+                })
+              }
+            />
+          ) : (
+            <div className="bg-black/60 border-b-2 border-red-900/40 p-4">
             <div className="max-w-[2000px] mx-auto">
               <div className="flex items-center gap-2 mb-3">
                 <div className="text-xs text-red-500/80 font-mono tracking-widest">DEFCON THREAT MATRIX</div>
@@ -264,6 +307,7 @@ export default function CommandCenterPage() {
               </div>
             </div>
           </div>
+          )}
 
           {/* Main Grid - Live Feed + Scenarios */}
           <div className="max-w-[2000px] mx-auto p-4 grid grid-cols-1 lg:grid-cols-2 gap-4">
