@@ -514,6 +514,8 @@ export function LeaderBubbles() {
           </button>
         ))}
       </div>
+      </>
+      )}
 
       {/* Cinematic Intel Popup - Rendered to body via portal (hidden when split-view active) */}
       {!selectedLeaderForDetail && isMounted && isOpen && hoveredLeaderId && placement && createPortal(
