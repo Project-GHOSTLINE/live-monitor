@@ -358,19 +358,27 @@ export function LeaderBubbles() {
     setIsMounted(true);
   }, []);
 
+  // Track loading state for pulse data
+  const [loadingPulseData, setLoadingPulseData] = useState<Record<string, boolean>>({});
+
   // Load pulse data when leader is hovered OR selected for detail
   useEffect(() => {
     const targetLeaderId = selectedLeaderForDetail || hoveredLeaderId;
-    if (targetLeaderId && !pulseData[targetLeaderId]) {
+    if (targetLeaderId && !pulseData[targetLeaderId] && !loadingPulseData[targetLeaderId]) {
+      setLoadingPulseData(prev => ({ ...prev, [targetLeaderId]: true }));
       getFactionPulse(targetLeaderId).then(pulse => {
         setPulseData(prev => ({ ...prev, [targetLeaderId]: pulse }));
         if (pulse) {
           const readiness = computeReadiness(pulse);
           setReadinessData(prev => ({ ...prev, [targetLeaderId]: readiness }));
         }
+        setLoadingPulseData(prev => ({ ...prev, [targetLeaderId]: false }));
+      }).catch(error => {
+        console.error('Error loading pulse data:', error);
+        setLoadingPulseData(prev => ({ ...prev, [targetLeaderId]: false }));
       });
     }
-  }, [hoveredLeaderId, selectedLeaderForDetail, pulseData]);
+  }, [hoveredLeaderId, selectedLeaderForDetail, pulseData, loadingPulseData]);
 
   const selected = WORLD_LEADERS.find(l => l.countryCode === selectedLeader);
 
@@ -528,30 +536,58 @@ export function LeaderBubbles() {
             }
           }}
           onMouseLeave={handleHoverEnd}
-          style={{ zIndex: 9999 }}
+          style={{
+            zIndex: 9999,
+            pointerEvents: 'auto'
+          }}
         >
-          <LeaderIntelCinematic
-            leaderId={hoveredLeaderId}
-            leaderName={WORLD_LEADERS.find(l => l.countryCode === hoveredLeaderId)?.country || hoveredLeaderId}
-            readinessScore={
-              readinessData[hoveredLeaderId]?.readiness_score ||
-              WORLD_LEADERS.find(l => l.countryCode === hoveredLeaderId)?.readiness ||
-              0
-            }
-            readinessDelta={0} // TODO: calculate delta from previous value
-            anchorRect={placement}
-            isLocked={false}
-            onClose={() => {}} // No close handler needed for hover-only mode
-            onIncidentClick={(incidentId) => {
-              // TODO: Open incident details modal
-              if (process.env.NODE_ENV === 'development') {
-                console.log('Incident clicked:', incidentId);
+          {loadingPulseData[hoveredLeaderId] ? (
+            // Loading state popup
+            <div
+              className="fixed w-[380px] h-[420px] bg-black/98 border-2 border-green-500 rounded-lg shadow-2xl shadow-green-500/50 font-mono text-xs overflow-hidden flex items-center justify-center"
+              style={{
+                left: placement.x,
+                top: placement.y,
+              }}
+            >
+              <div className="text-center space-y-4">
+                <div className="text-green-400 text-2xl font-bold animate-pulse glow-text">
+                  LOADING INTEL...
+                </div>
+                <div className="flex justify-center gap-2">
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                </div>
+                <div className="text-green-500/60 text-xs tracking-wider uppercase">
+                  Analyzing {WORLD_LEADERS.find(l => l.countryCode === hoveredLeaderId)?.country}...
+                </div>
+              </div>
+            </div>
+          ) : (
+            <LeaderIntelCinematic
+              leaderId={hoveredLeaderId}
+              leaderName={WORLD_LEADERS.find(l => l.countryCode === hoveredLeaderId)?.country || hoveredLeaderId}
+              readinessScore={
+                readinessData[hoveredLeaderId]?.readiness_score ||
+                WORLD_LEADERS.find(l => l.countryCode === hoveredLeaderId)?.readiness ||
+                0
               }
-            }}
-            power={getCountryPower(hoveredLeaderId)}
-            pulse={pulseData[hoveredLeaderId] || null}
-            readiness={readinessData[hoveredLeaderId] || null}
-          />
+              readinessDelta={0} // TODO: calculate delta from previous value
+              anchorRect={placement}
+              isLocked={false}
+              onClose={() => {}} // No close handler needed for hover-only mode
+              onIncidentClick={(incidentId) => {
+                // TODO: Open incident details modal
+                if (process.env.NODE_ENV === 'development') {
+                  console.log('Incident clicked:', incidentId);
+                }
+              }}
+              power={getCountryPower(hoveredLeaderId)}
+              pulse={pulseData[hoveredLeaderId] || null}
+              readiness={readinessData[hoveredLeaderId] || null}
+            />
+          )}
         </div>,
         document.body
       )}
