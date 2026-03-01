@@ -4,6 +4,8 @@ import { useQuery } from '@tanstack/react-query';
 import { Navigation } from '@/components/shared/Navigation';
 import { MilitaryForces } from '@/components/scenarios/MilitaryForces';
 import { LeaderBubbles } from '@/components/command-center/LeaderBubbles';
+import { TheatreBar } from '@/components/command-center/TheatreBar';
+import { FrontLinesPanel } from '@/components/command-center/FrontLinesPanel';
 import { EvidenceDrawer } from '@/components/command-center/EvidenceDrawer';
 import { TheaterMap } from '@/components/command-center/TheaterMap';
 import { TacticalMapEnhanced } from '@/components/command-center/TacticalMapEnhanced';
@@ -82,6 +84,7 @@ export default function CommandCenterPage() {
   // Feature flags
   const stateEngineEnabled = useFeature('STATE_ENABLED');
   const mapEnhancementsEnabled = useFeature('MAP_ENABLED');
+  const cceV2Enabled = process.env.NEXT_PUBLIC_CCE_V2_ENABLED === 'true';
 
   useEffect(() => {
     const interval = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -261,6 +264,13 @@ export default function CommandCenterPage() {
             </div>
           </div>
 
+          {/* Theatre Bar - CCE v2 Feature */}
+          {cceV2Enabled && (
+            <div className="max-w-[2000px] mx-auto">
+              <TheatreBar />
+            </div>
+          )}
+
           {/* GLOBAL THEATER MAP - Enhanced Tactical Map with Replay Controls */}
           <div className="bg-black/60 border-b-2 border-green-900/40 p-4">
             <div className="max-w-[2000px] mx-auto">
@@ -278,6 +288,13 @@ export default function CommandCenterPage() {
               )}
             </div>
           </div>
+
+          {/* Front Lines Panel - CCE v2 Feature */}
+          {cceV2Enabled && (
+            <div className="max-w-[2000px] mx-auto">
+              <FrontLinesPanel />
+            </div>
+          )}
 
           {/* Cinematic Intel Panel - NEW - Feature Flagged */}
           {stateEngineEnabled && (
