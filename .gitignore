@@ -34,8 +34,12 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# Database
-/data
+# Database (exclude .db files but allow data/geo/)
+/data/*.db
+/data/*.db-shm
+/data/*.db-wal
 *.db
 *.db-shm
 *.db-wal
+# Allow geo data for offline resolution
+!/data/geo/

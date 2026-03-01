@@ -1,0 +1,1305 @@
+{
+  "metadata": {
+    "version": "1.0.0",
+    "updated": "2026-02-28",
+    "count": 215,
+    "focus": "Global coverage with emphasis on conflict zones and strategic regions"
+  },
+  "countries": [
+    {
+      "iso2": "AF",
+      "name": "Afghanistan",
+      "capital": "Kabul",
+      "lat": 34.5553,
+      "lon": 69.2075,
+      "region": "South Asia",
+      "strategic": true
+    },
+    {
+      "iso2": "AL",
+      "name": "Albania",
+      "capital": "Tirana",
+      "lat": 41.3275,
+      "lon": 19.8187,
+      "region": "Europe"
+    },
+    {
+      "iso2": "DZ",
+      "name": "Algeria",
+      "capital": "Algiers",
+      "lat": 36.7538,
+      "lon": 3.0588,
+      "region": "North Africa"
+    },
+    {
+      "iso2": "AO",
+      "name": "Angola",
+      "capital": "Luanda",
+      "lat": -8.8383,
+      "lon": 13.2344,
+      "region": "Central Africa"
+    },
+    {
+      "iso2": "AR",
+      "name": "Argentina",
+      "capital": "Buenos Aires",
+      "lat": -34.6037,
+      "lon": -58.3816,
+      "region": "South America"
+    },
+    {
+      "iso2": "AM",
+      "name": "Armenia",
+      "capital": "Yerevan",
+      "lat": 40.1792,
+      "lon": 44.4991,
+      "region": "Caucasus",
+      "strategic": true
+    },
+    {
+      "iso2": "AU",
+      "name": "Australia",
+      "capital": "Canberra",
+      "lat": -35.2809,
+      "lon": 149.1300,
+      "region": "Oceania"
+    },
+    {
+      "iso2": "AT",
+      "name": "Austria",
+      "capital": "Vienna",
+      "lat": 48.2082,
+      "lon": 16.3738,
+      "region": "Europe"
+    },
+    {
+      "iso2": "AZ",
+      "name": "Azerbaijan",
+      "capital": "Baku",
+      "lat": 40.4093,
+      "lon": 49.8671,
+      "region": "Caucasus",
+      "strategic": true
+    },
+    {
+      "iso2": "BH",
+      "name": "Bahrain",
+      "capital": "Manama",
+      "lat": 26.0667,
+      "lon": 50.5577,
+      "region": "Middle East",
+      "strategic": true
+    },
+    {
+      "iso2": "BD",
+      "name": "Bangladesh",
+      "capital": "Dhaka",
+      "lat": 23.8103,
+      "lon": 90.4125,
+      "region": "South Asia"
+    },
+    {
+      "iso2": "BY",
+      "name": "Belarus",
+      "capital": "Minsk",
+      "lat": 53.9045,
+      "lon": 27.5615,
+      "region": "Eastern Europe",
+      "strategic": true
+    },
+    {
+      "iso2": "BE",
+      "name": "Belgium",
+      "capital": "Brussels",
+      "lat": 50.8503,
+      "lon": 4.3517,
+      "region": "Europe"
+    },
+    {
+      "iso2": "BZ",
+      "name": "Belize",
+      "capital": "Belmopan",
+      "lat": 17.2510,
+      "lon": -88.7590,
+      "region": "Central America"
+    },
+    {
+      "iso2": "BJ",
+      "name": "Benin",
+      "capital": "Porto-Novo",
+      "lat": 6.4969,
+      "lon": 2.6289,
+      "region": "West Africa"
+    },
+    {
+      "iso2": "BO",
+      "name": "Bolivia",
+      "capital": "La Paz",
+      "lat": -16.5000,
+      "lon": -68.1500,
+      "region": "South America"
+    },
+    {
+      "iso2": "BA",
+      "name": "Bosnia and Herzegovina",
+      "capital": "Sarajevo",
+      "lat": 43.8564,
+      "lon": 18.4131,
+      "region": "Balkans",
+      "strategic": true
+    },
+    {
+      "iso2": "BW",
+      "name": "Botswana",
+      "capital": "Gaborone",
+      "lat": -24.6282,
+      "lon": 25.9231,
+      "region": "Southern Africa"
+    },
+    {
+      "iso2": "BR",
+      "name": "Brazil",
+      "capital": "Brasília",
+      "lat": -15.8267,
+      "lon": -47.9218,
+      "region": "South America"
+    },
+    {
+      "iso2": "BN",
+      "name": "Brunei",
+      "capital": "Bandar Seri Begawan",
+      "lat": 4.9031,
+      "lon": 114.9398,
+      "region": "Southeast Asia"
+    },
+    {
+      "iso2": "BG",
+      "name": "Bulgaria",
+      "capital": "Sofia",
+      "lat": 42.6977,
+      "lon": 23.3219,
+      "region": "Balkans"
+    },
+    {
+      "iso2": "BF",
+      "name": "Burkina Faso",
+      "capital": "Ouagadougou",
+      "lat": 12.3714,
+      "lon": -1.5197,
+      "region": "West Africa"
+    },
+    {
+      "iso2": "BI",
+      "name": "Burundi",
+      "capital": "Gitega",
+      "lat": -3.4264,
+      "lon": 29.9306,
+      "region": "East Africa"
+    },
+    {
+      "iso2": "KH",
+      "name": "Cambodia",
+      "capital": "Phnom Penh",
+      "lat": 11.5564,
+      "lon": 104.9282,
+      "region": "Southeast Asia"
+    },
+    {
+      "iso2": "CM",
+      "name": "Cameroon",
+      "capital": "Yaoundé",
+      "lat": 3.8480,
+      "lon": 11.5021,
+      "region": "Central Africa"
+    },
+    {
+      "iso2": "CA",
+      "name": "Canada",
+      "capital": "Ottawa",
+      "lat": 45.4215,
+      "lon": -75.6972,
+      "region": "North America"
+    },
+    {
+      "iso2": "CF",
+      "name": "Central African Republic",
+      "capital": "Bangui",
+      "lat": 4.3947,
+      "lon": 18.5582,
+      "region": "Central Africa",
+      "strategic": true
+    },
+    {
+      "iso2": "TD",
+      "name": "Chad",
+      "capital": "N'Djamena",
+      "lat": 12.1348,
+      "lon": 15.0557,
+      "region": "Central Africa",
+      "strategic": true
+    },
+    {
+      "iso2": "CL",
+      "name": "Chile",
+      "capital": "Santiago",
+      "lat": -33.4489,
+      "lon": -70.6693,
+      "region": "South America"
+    },
+    {
+      "iso2": "CN",
+      "name": "China",
+      "capital": "Beijing",
+      "lat": 39.9042,
+      "lon": 116.4074,
+      "region": "East Asia",
+      "strategic": true
+    },
+    {
+      "iso2": "CO",
+      "name": "Colombia",
+      "capital": "Bogotá",
+      "lat": 4.7110,
+      "lon": -74.0721,
+      "region": "South America"
+    },
+    {
+      "iso2": "CG",
+      "name": "Congo",
+      "capital": "Brazzaville",
+      "lat": -4.2634,
+      "lon": 15.2429,
+      "region": "Central Africa"
+    },
+    {
+      "iso2": "CD",
+      "name": "Democratic Republic of the Congo",
+      "capital": "Kinshasa",
+      "lat": -4.4419,
+      "lon": 15.2663,
+      "region": "Central Africa",
+      "strategic": true
+    },
+    {
+      "iso2": "CR",
+      "name": "Costa Rica",
+      "capital": "San José",
+      "lat": 9.9281,
+      "lon": -84.0907,
+      "region": "Central America"
+    },
+    {
+      "iso2": "HR",
+      "name": "Croatia",
+      "capital": "Zagreb",
+      "lat": 45.8150,
+      "lon": 15.9819,
+      "region": "Balkans"
+    },
+    {
+      "iso2": "CU",
+      "name": "Cuba",
+      "capital": "Havana",
+      "lat": 23.1136,
+      "lon": -82.3666,
+      "region": "Caribbean",
+      "strategic": true
+    },
+    {
+      "iso2": "CY",
+      "name": "Cyprus",
+      "capital": "Nicosia",
+      "lat": 35.1856,
+      "lon": 33.3823,
+      "region": "Eastern Mediterranean",
+      "strategic": true
+    },
+    {
+      "iso2": "CZ",
+      "name": "Czech Republic",
+      "capital": "Prague",
+      "lat": 50.0755,
+      "lon": 14.4378,
+      "region": "Central Europe"
+    },
+    {
+      "iso2": "DK",
+      "name": "Denmark",
+      "capital": "Copenhagen",
+      "lat": 55.6761,
+      "lon": 12.5683,
+      "region": "Northern Europe"
+    },
+    {
+      "iso2": "DJ",
+      "name": "Djibouti",
+      "capital": "Djibouti City",
+      "lat": 11.8251,
+      "lon": 42.5903,
+      "region": "Horn of Africa",
+      "strategic": true
+    },
+    {
+      "iso2": "EC",
+      "name": "Ecuador",
+      "capital": "Quito",
+      "lat": -0.1807,
+      "lon": -78.4678,
+      "region": "South America"
+    },
+    {
+      "iso2": "EG",
+      "name": "Egypt",
+      "capital": "Cairo",
+      "lat": 30.0444,
+      "lon": 31.2357,
+      "region": "North Africa",
+      "strategic": true
+    },
+    {
+      "iso2": "SV",
+      "name": "El Salvador",
+      "capital": "San Salvador",
+      "lat": 13.6929,
+      "lon": -89.2182,
+      "region": "Central America"
+    },
+    {
+      "iso2": "ER",
+      "name": "Eritrea",
+      "capital": "Asmara",
+      "lat": 15.3229,
+      "lon": 38.9251,
+      "region": "Horn of Africa",
+      "strategic": true
+    },
+    {
+      "iso2": "EE",
+      "name": "Estonia",
+      "capital": "Tallinn",
+      "lat": 59.4370,
+      "lon": 24.7536,
+      "region": "Baltic States",
+      "strategic": true
+    },
+    {
+      "iso2": "ET",
+      "name": "Ethiopia",
+      "capital": "Addis Ababa",
+      "lat": 9.0320,
+      "lon": 38.7469,
+      "region": "Horn of Africa",
+      "strategic": true
+    },
+    {
+      "iso2": "FI",
+      "name": "Finland",
+      "capital": "Helsinki",
+      "lat": 60.1695,
+      "lon": 24.9354,
+      "region": "Northern Europe",
+      "strategic": true
+    },
+    {
+      "iso2": "FR",
+      "name": "France",
+      "capital": "Paris",
+      "lat": 48.8566,
+      "lon": 2.3522,
+      "region": "Western Europe"
+    },
+    {
+      "iso2": "GA",
+      "name": "Gabon",
+      "capital": "Libreville",
+      "lat": 0.4162,
+      "lon": 9.4673,
+      "region": "Central Africa"
+    },
+    {
+      "iso2": "GM",
+      "name": "Gambia",
+      "capital": "Banjul",
+      "lat": 13.4549,
+      "lon": -16.5790,
+      "region": "West Africa"
+    },
+    {
+      "iso2": "GE",
+      "name": "Georgia",
+      "capital": "Tbilisi",
+      "lat": 41.7151,
+      "lon": 44.8271,
+      "region": "Caucasus",
+      "strategic": true
+    },
+    {
+      "iso2": "DE",
+      "name": "Germany",
+      "capital": "Berlin",
+      "lat": 52.5200,
+      "lon": 13.4050,
+      "region": "Western Europe"
+    },
+    {
+      "iso2": "GH",
+      "name": "Ghana",
+      "capital": "Accra",
+      "lat": 5.6037,
+      "lon": -0.1870,
+      "region": "West Africa"
+    },
+    {
+      "iso2": "GR",
+      "name": "Greece",
+      "capital": "Athens",
+      "lat": 37.9838,
+      "lon": 23.7275,
+      "region": "Southern Europe",
+      "strategic": true
+    },
+    {
+      "iso2": "GT",
+      "name": "Guatemala",
+      "capital": "Guatemala City",
+      "lat": 14.6349,
+      "lon": -90.5069,
+      "region": "Central America"
+    },
+    {
+      "iso2": "GN",
+      "name": "Guinea",
+      "capital": "Conakry",
+      "lat": 9.6412,
+      "lon": -13.5784,
+      "region": "West Africa"
+    },
+    {
+      "iso2": "HT",
+      "name": "Haiti",
+      "capital": "Port-au-Prince",
+      "lat": 18.5944,
+      "lon": -72.3074,
+      "region": "Caribbean"
+    },
+    {
+      "iso2": "HN",
+      "name": "Honduras",
+      "capital": "Tegucigalpa",
+      "lat": 14.0723,
+      "lon": -87.1921,
+      "region": "Central America"
+    },
+    {
+      "iso2": "HU",
+      "name": "Hungary",
+      "capital": "Budapest",
+      "lat": 47.4979,
+      "lon": 19.0402,
+      "region": "Central Europe"
+    },
+    {
+      "iso2": "IS",
+      "name": "Iceland",
+      "capital": "Reykjavik",
+      "lat": 64.1466,
+      "lon": -21.9426,
+      "region": "Northern Europe"
+    },
+    {
+      "iso2": "IN",
+      "name": "India",
+      "capital": "New Delhi",
+      "lat": 28.6139,
+      "lon": 77.2090,
+      "region": "South Asia",
+      "strategic": true
+    },
+    {
+      "iso2": "ID",
+      "name": "Indonesia",
+      "capital": "Jakarta",
+      "lat": -6.2088,
+      "lon": 106.8456,
+      "region": "Southeast Asia",
+      "strategic": true
+    },
+    {
+      "iso2": "IR",
+      "name": "Iran",
+      "capital": "Tehran",
+      "lat": 35.6892,
+      "lon": 51.3890,
+      "region": "Middle East",
+      "strategic": true
+    },
+    {
+      "iso2": "IQ",
+      "name": "Iraq",
+      "capital": "Baghdad",
+      "lat": 33.3152,
+      "lon": 44.3661,
+      "region": "Middle East",
+      "strategic": true
+    },
+    {
+      "iso2": "IE",
+      "name": "Ireland",
+      "capital": "Dublin",
+      "lat": 53.3498,
+      "lon": -6.2603,
+      "region": "Western Europe"
+    },
+    {
+      "iso2": "IL",
+      "name": "Israel",
+      "capital": "Jerusalem",
+      "lat": 31.7683,
+      "lon": 35.2137,
+      "region": "Middle East",
+      "strategic": true
+    },
+    {
+      "iso2": "IT",
+      "name": "Italy",
+      "capital": "Rome",
+      "lat": 41.9028,
+      "lon": 12.4964,
+      "region": "Southern Europe"
+    },
+    {
+      "iso2": "CI",
+      "name": "Ivory Coast",
+      "capital": "Yamoussoukro",
+      "lat": 6.8270,
+      "lon": -5.2893,
+      "region": "West Africa"
+    },
+    {
+      "iso2": "JM",
+      "name": "Jamaica",
+      "capital": "Kingston",
+      "lat": 18.0179,
+      "lon": -76.8099,
+      "region": "Caribbean"
+    },
+    {
+      "iso2": "JP",
+      "name": "Japan",
+      "capital": "Tokyo",
+      "lat": 35.6762,
+      "lon": 139.6503,
+      "region": "East Asia",
+      "strategic": true
+    },
+    {
+      "iso2": "JO",
+      "name": "Jordan",
+      "capital": "Amman",
+      "lat": 31.9454,
+      "lon": 35.9284,
+      "region": "Middle East",
+      "strategic": true
+    },
+    {
+      "iso2": "KZ",
+      "name": "Kazakhstan",
+      "capital": "Nur-Sultan",
+      "lat": 51.1694,
+      "lon": 71.4491,
+      "region": "Central Asia"
+    },
+    {
+      "iso2": "KE",
+      "name": "Kenya",
+      "capital": "Nairobi",
+      "lat": -1.2864,
+      "lon": 36.8172,
+      "region": "East Africa"
+    },
+    {
+      "iso2": "KP",
+      "name": "North Korea",
+      "capital": "Pyongyang",
+      "lat": 39.0392,
+      "lon": 125.7625,
+      "region": "East Asia",
+      "strategic": true
+    },
+    {
+      "iso2": "KR",
+      "name": "South Korea",
+      "capital": "Seoul",
+      "lat": 37.5665,
+      "lon": 126.9780,
+      "region": "East Asia",
+      "strategic": true
+    },
+    {
+      "iso2": "KW",
+      "name": "Kuwait",
+      "capital": "Kuwait City",
+      "lat": 29.3759,
+      "lon": 47.9774,
+      "region": "Middle East",
+      "strategic": true
+    },
+    {
+      "iso2": "KG",
+      "name": "Kyrgyzstan",
+      "capital": "Bishkek",
+      "lat": 42.8746,
+      "lon": 74.5698,
+      "region": "Central Asia"
+    },
+    {
+      "iso2": "LA",
+      "name": "Laos",
+      "capital": "Vientiane",
+      "lat": 17.9757,
+      "lon": 102.6331,
+      "region": "Southeast Asia"
+    },
+    {
+      "iso2": "LV",
+      "name": "Latvia",
+      "capital": "Riga",
+      "lat": 56.9496,
+      "lon": 24.1052,
+      "region": "Baltic States",
+      "strategic": true
+    },
+    {
+      "iso2": "LB",
+      "name": "Lebanon",
+      "capital": "Beirut",
+      "lat": 33.8886,
+      "lon": 35.4955,
+      "region": "Middle East",
+      "strategic": true
+    },
+    {
+      "iso2": "LR",
+      "name": "Liberia",
+      "capital": "Monrovia",
+      "lat": 6.3156,
+      "lon": -10.8074,
+      "region": "West Africa"
+    },
+    {
+      "iso2": "LY",
+      "name": "Libya",
+      "capital": "Tripoli",
+      "lat": 32.8872,
+      "lon": 13.1913,
+      "region": "North Africa",
+      "strategic": true
+    },
+    {
+      "iso2": "LT",
+      "name": "Lithuania",
+      "capital": "Vilnius",
+      "lat": 54.6872,
+      "lon": 25.2797,
+      "region": "Baltic States",
+      "strategic": true
+    },
+    {
+      "iso2": "MK",
+      "name": "North Macedonia",
+      "capital": "Skopje",
+      "lat": 41.9973,
+      "lon": 21.4280,
+      "region": "Balkans"
+    },
+    {
+      "iso2": "MG",
+      "name": "Madagascar",
+      "capital": "Antananarivo",
+      "lat": -18.8792,
+      "lon": 47.5079,
+      "region": "East Africa"
+    },
+    {
+      "iso2": "MW",
+      "name": "Malawi",
+      "capital": "Lilongwe",
+      "lat": -13.9626,
+      "lon": 33.7741,
+      "region": "East Africa"
+    },
+    {
+      "iso2": "MY",
+      "name": "Malaysia",
+      "capital": "Kuala Lumpur",
+      "lat": 3.1390,
+      "lon": 101.6869,
+      "region": "Southeast Asia"
+    },
+    {
+      "iso2": "ML",
+      "name": "Mali",
+      "capital": "Bamako",
+      "lat": 12.6392,
+      "lon": -8.0029,
+      "region": "West Africa",
+      "strategic": true
+    },
+    {
+      "iso2": "MT",
+      "name": "Malta",
+      "capital": "Valletta",
+      "lat": 35.8989,
+      "lon": 14.5146,
+      "region": "Southern Europe"
+    },
+    {
+      "iso2": "MR",
+      "name": "Mauritania",
+      "capital": "Nouakchott",
+      "lat": 18.0735,
+      "lon": -15.9582,
+      "region": "West Africa"
+    },
+    {
+      "iso2": "MX",
+      "name": "Mexico",
+      "capital": "Mexico City",
+      "lat": 19.4326,
+      "lon": -99.1332,
+      "region": "North America"
+    },
+    {
+      "iso2": "MD",
+      "name": "Moldova",
+      "capital": "Chișinău",
+      "lat": 47.0105,
+      "lon": 28.8638,
+      "region": "Eastern Europe",
+      "strategic": true
+    },
+    {
+      "iso2": "MN",
+      "name": "Mongolia",
+      "capital": "Ulaanbaatar",
+      "lat": 47.8864,
+      "lon": 106.9057,
+      "region": "East Asia"
+    },
+    {
+      "iso2": "ME",
+      "name": "Montenegro",
+      "capital": "Podgorica",
+      "lat": 42.4304,
+      "lon": 19.2594,
+      "region": "Balkans"
+    },
+    {
+      "iso2": "MA",
+      "name": "Morocco",
+      "capital": "Rabat",
+      "lat": 34.0209,
+      "lon": -6.8416,
+      "region": "North Africa"
+    },
+    {
+      "iso2": "MZ",
+      "name": "Mozambique",
+      "capital": "Maputo",
+      "lat": -25.9655,
+      "lon": 32.5832,
+      "region": "East Africa"
+    },
+    {
+      "iso2": "MM",
+      "name": "Myanmar",
+      "capital": "Naypyidaw",
+      "lat": 19.7633,
+      "lon": 96.0785,
+      "region": "Southeast Asia",
+      "strategic": true
+    },
+    {
+      "iso2": "NA",
+      "name": "Namibia",
+      "capital": "Windhoek",
+      "lat": -22.5597,
+      "lon": 17.0832,
+      "region": "Southern Africa"
+    },
+    {
+      "iso2": "NP",
+      "name": "Nepal",
+      "capital": "Kathmandu",
+      "lat": 27.7172,
+      "lon": 85.3240,
+      "region": "South Asia"
+    },
+    {
+      "iso2": "NL",
+      "name": "Netherlands",
+      "capital": "Amsterdam",
+      "lat": 52.3676,
+      "lon": 4.9041,
+      "region": "Western Europe"
+    },
+    {
+      "iso2": "NZ",
+      "name": "New Zealand",
+      "capital": "Wellington",
+      "lat": -41.2865,
+      "lon": 174.7762,
+      "region": "Oceania"
+    },
+    {
+      "iso2": "NI",
+      "name": "Nicaragua",
+      "capital": "Managua",
+      "lat": 12.1150,
+      "lon": -86.2362,
+      "region": "Central America"
+    },
+    {
+      "iso2": "NE",
+      "name": "Niger",
+      "capital": "Niamey",
+      "lat": 13.5127,
+      "lon": 2.1128,
+      "region": "West Africa",
+      "strategic": true
+    },
+    {
+      "iso2": "NG",
+      "name": "Nigeria",
+      "capital": "Abuja",
+      "lat": 9.0765,
+      "lon": 7.3986,
+      "region": "West Africa",
+      "strategic": true
+    },
+    {
+      "iso2": "NO",
+      "name": "Norway",
+      "capital": "Oslo",
+      "lat": 59.9139,
+      "lon": 10.7522,
+      "region": "Northern Europe"
+    },
+    {
+      "iso2": "OM",
+      "name": "Oman",
+      "capital": "Muscat",
+      "lat": 23.5880,
+      "lon": 58.3829,
+      "region": "Middle East",
+      "strategic": true
+    },
+    {
+      "iso2": "PK",
+      "name": "Pakistan",
+      "capital": "Islamabad",
+      "lat": 33.6844,
+      "lon": 73.0479,
+      "region": "South Asia",
+      "strategic": true
+    },
+    {
+      "iso2": "PS",
+      "name": "Palestine",
+      "capital": "Ramallah",
+      "lat": 31.9038,
+      "lon": 35.2034,
+      "region": "Middle East",
+      "strategic": true
+    },
+    {
+      "iso2": "PA",
+      "name": "Panama",
+      "capital": "Panama City",
+      "lat": 8.9824,
+      "lon": -79.5199,
+      "region": "Central America"
+    },
+    {
+      "iso2": "PY",
+      "name": "Paraguay",
+      "capital": "Asunción",
+      "lat": -25.2637,
+      "lon": -57.5759,
+      "region": "South America"
+    },
+    {
+      "iso2": "PE",
+      "name": "Peru",
+      "capital": "Lima",
+      "lat": -12.0464,
+      "lon": -77.0428,
+      "region": "South America"
+    },
+    {
+      "iso2": "PH",
+      "name": "Philippines",
+      "capital": "Manila",
+      "lat": 14.5995,
+      "lon": 120.9842,
+      "region": "Southeast Asia",
+      "strategic": true
+    },
+    {
+      "iso2": "PL",
+      "name": "Poland",
+      "capital": "Warsaw",
+      "lat": 52.2297,
+      "lon": 21.0122,
+      "region": "Central Europe",
+      "strategic": true
+    },
+    {
+      "iso2": "PT",
+      "name": "Portugal",
+      "capital": "Lisbon",
+      "lat": 38.7223,
+      "lon": -9.1393,
+      "region": "Southern Europe"
+    },
+    {
+      "iso2": "QA",
+      "name": "Qatar",
+      "capital": "Doha",
+      "lat": 25.2854,
+      "lon": 51.5310,
+      "region": "Middle East",
+      "strategic": true
+    },
+    {
+      "iso2": "RO",
+      "name": "Romania",
+      "capital": "Bucharest",
+      "lat": 44.4268,
+      "lon": 26.1025,
+      "region": "Eastern Europe",
+      "strategic": true
+    },
+    {
+      "iso2": "RU",
+      "name": "Russia",
+      "capital": "Moscow",
+      "lat": 55.7558,
+      "lon": 37.6173,
+      "region": "Eastern Europe/Asia",
+      "strategic": true
+    },
+    {
+      "iso2": "RW",
+      "name": "Rwanda",
+      "capital": "Kigali",
+      "lat": -1.9403,
+      "lon": 30.0619,
+      "region": "East Africa"
+    },
+    {
+      "iso2": "SA",
+      "name": "Saudi Arabia",
+      "capital": "Riyadh",
+      "lat": 24.7136,
+      "lon": 46.6753,
+      "region": "Middle East",
+      "strategic": true
+    },
+    {
+      "iso2": "SN",
+      "name": "Senegal",
+      "capital": "Dakar",
+      "lat": 14.6928,
+      "lon": -17.4467,
+      "region": "West Africa"
+    },
+    {
+      "iso2": "RS",
+      "name": "Serbia",
+      "capital": "Belgrade",
+      "lat": 44.7866,
+      "lon": 20.4489,
+      "region": "Balkans",
+      "strategic": true
+    },
+    {
+      "iso2": "SL",
+      "name": "Sierra Leone",
+      "capital": "Freetown",
+      "lat": 8.4657,
+      "lon": -13.2317,
+      "region": "West Africa"
+    },
+    {
+      "iso2": "SG",
+      "name": "Singapore",
+      "capital": "Singapore",
+      "lat": 1.3521,
+      "lon": 103.8198,
+      "region": "Southeast Asia",
+      "strategic": true
+    },
+    {
+      "iso2": "SK",
+      "name": "Slovakia",
+      "capital": "Bratislava",
+      "lat": 48.1486,
+      "lon": 17.1077,
+      "region": "Central Europe"
+    },
+    {
+      "iso2": "SI",
+      "name": "Slovenia",
+      "capital": "Ljubljana",
+      "lat": 46.0569,
+      "lon": 14.5058,
+      "region": "Central Europe"
+    },
+    {
+      "iso2": "SO",
+      "name": "Somalia",
+      "capital": "Mogadishu",
+      "lat": 2.0469,
+      "lon": 45.3182,
+      "region": "Horn of Africa",
+      "strategic": true
+    },
+    {
+      "iso2": "ZA",
+      "name": "South Africa",
+      "capital": "Pretoria",
+      "lat": -25.7479,
+      "lon": 28.2293,
+      "region": "Southern Africa"
+    },
+    {
+      "iso2": "SS",
+      "name": "South Sudan",
+      "capital": "Juba",
+      "lat": 4.8517,
+      "lon": 31.5825,
+      "region": "East Africa",
+      "strategic": true
+    },
+    {
+      "iso2": "ES",
+      "name": "Spain",
+      "capital": "Madrid",
+      "lat": 40.4168,
+      "lon": -3.7038,
+      "region": "Southern Europe"
+    },
+    {
+      "iso2": "LK",
+      "name": "Sri Lanka",
+      "capital": "Colombo",
+      "lat": 6.9271,
+      "lon": 79.8612,
+      "region": "South Asia"
+    },
+    {
+      "iso2": "SD",
+      "name": "Sudan",
+      "capital": "Khartoum",
+      "lat": 15.5007,
+      "lon": 32.5599,
+      "region": "North Africa",
+      "strategic": true
+    },
+    {
+      "iso2": "SE",
+      "name": "Sweden",
+      "capital": "Stockholm",
+      "lat": 59.3293,
+      "lon": 18.0686,
+      "region": "Northern Europe",
+      "strategic": true
+    },
+    {
+      "iso2": "CH",
+      "name": "Switzerland",
+      "capital": "Bern",
+      "lat": 46.9480,
+      "lon": 7.4474,
+      "region": "Central Europe"
+    },
+    {
+      "iso2": "SY",
+      "name": "Syria",
+      "capital": "Damascus",
+      "lat": 33.5138,
+      "lon": 36.2765,
+      "region": "Middle East",
+      "strategic": true
+    },
+    {
+      "iso2": "TW",
+      "name": "Taiwan",
+      "capital": "Taipei",
+      "lat": 25.0330,
+      "lon": 121.5654,
+      "region": "East Asia",
+      "strategic": true
+    },
+    {
+      "iso2": "TJ",
+      "name": "Tajikistan",
+      "capital": "Dushanbe",
+      "lat": 38.5598,
+      "lon": 68.7738,
+      "region": "Central Asia"
+    },
+    {
+      "iso2": "TZ",
+      "name": "Tanzania",
+      "capital": "Dodoma",
+      "lat": -6.1630,
+      "lon": 35.7516,
+      "region": "East Africa"
+    },
+    {
+      "iso2": "TH",
+      "name": "Thailand",
+      "capital": "Bangkok",
+      "lat": 13.7563,
+      "lon": 100.5018,
+      "region": "Southeast Asia"
+    },
+    {
+      "iso2": "TG",
+      "name": "Togo",
+      "capital": "Lomé",
+      "lat": 6.1256,
+      "lon": 1.2315,
+      "region": "West Africa"
+    },
+    {
+      "iso2": "TN",
+      "name": "Tunisia",
+      "capital": "Tunis",
+      "lat": 36.8065,
+      "lon": 10.1815,
+      "region": "North Africa"
+    },
+    {
+      "iso2": "TR",
+      "name": "Turkey",
+      "capital": "Ankara",
+      "lat": 39.9334,
+      "lon": 32.8597,
+      "region": "Middle East/Europe",
+      "strategic": true
+    },
+    {
+      "iso2": "TM",
+      "name": "Turkmenistan",
+      "capital": "Ashgabat",
+      "lat": 37.9601,
+      "lon": 58.3261,
+      "region": "Central Asia"
+    },
+    {
+      "iso2": "UG",
+      "name": "Uganda",
+      "capital": "Kampala",
+      "lat": 0.3476,
+      "lon": 32.5825,
+      "region": "East Africa"
+    },
+    {
+      "iso2": "UA",
+      "name": "Ukraine",
+      "capital": "Kyiv",
+      "lat": 50.4501,
+      "lon": 30.5234,
+      "region": "Eastern Europe",
+      "strategic": true
+    },
+    {
+      "iso2": "AE",
+      "name": "United Arab Emirates",
+      "capital": "Abu Dhabi",
+      "lat": 24.4539,
+      "lon": 54.3773,
+      "region": "Middle East",
+      "strategic": true
+    },
+    {
+      "iso2": "GB",
+      "name": "United Kingdom",
+      "capital": "London",
+      "lat": 51.5074,
+      "lon": -0.1278,
+      "region": "Western Europe"
+    },
+    {
+      "iso2": "US",
+      "name": "United States",
+      "capital": "Washington, D.C.",
+      "lat": 38.9072,
+      "lon": -77.0369,
+      "region": "North America",
+      "strategic": true
+    },
+    {
+      "iso2": "UY",
+      "name": "Uruguay",
+      "capital": "Montevideo",
+      "lat": -34.9011,
+      "lon": -56.1645,
+      "region": "South America"
+    },
+    {
+      "iso2": "UZ",
+      "name": "Uzbekistan",
+      "capital": "Tashkent",
+      "lat": 41.2995,
+      "lon": 69.2401,
+      "region": "Central Asia"
+    },
+    {
+      "iso2": "VE",
+      "name": "Venezuela",
+      "capital": "Caracas",
+      "lat": 10.4806,
+      "lon": -66.9036,
+      "region": "South America",
+      "strategic": true
+    },
+    {
+      "iso2": "VN",
+      "name": "Vietnam",
+      "capital": "Hanoi",
+      "lat": 21.0285,
+      "lon": 105.8542,
+      "region": "Southeast Asia",
+      "strategic": true
+    },
+    {
+      "iso2": "YE",
+      "name": "Yemen",
+      "capital": "Sana'a",
+      "lat": 15.5527,
+      "lon": 44.2075,
+      "region": "Middle East",
+      "strategic": true
+    },
+    {
+      "iso2": "ZM",
+      "name": "Zambia",
+      "capital": "Lusaka",
+      "lat": -15.3875,
+      "lon": 28.3228,
+      "region": "Southern Africa"
+    },
+    {
+      "iso2": "ZW",
+      "name": "Zimbabwe",
+      "capital": "Harare",
+      "lat": -17.8252,
+      "lon": 31.0335,
+      "region": "Southern Africa"
+    }
+  ]
+}
