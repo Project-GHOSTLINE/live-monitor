@@ -10,11 +10,14 @@ import { TacticalMapEnhanced } from '@/components/command-center/TacticalMapEnha
 import { CinematicIntelPanel } from '@/components/command-center/CinematicIntelPanel';
 import { DEFCONMatrixEnhanced } from '@/components/command-center/DEFCONMatrixEnhanced';
 import { TimelineReplayControls } from '@/components/command-center/TimelineReplayControls';
+import { NewsDetailPopup } from '@/components/shared/NewsDetailPopup';
+import { InteractiveMetric } from '@/components/shared/InteractiveMetric';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { useLanguage } from '@/lib/i18n/LanguageContext';
 import { useFeature } from '@/lib/features/FeatureFlagContext';
 import { ScenarioScore } from '@/types/scenario';
 import { useState, useEffect } from 'react';
+import { Activity, Globe, AlertTriangle, Shield } from 'lucide-react';
 
 interface FeedItem {
   id: number;
@@ -73,6 +76,8 @@ export default function CommandCenterPage() {
     target?: string;
     title?: string;
   }>({ isOpen: false });
+
+  const [selectedNews, setSelectedNews] = useState<FeedItem | null>(null);
 
   // Feature flags
   const stateEngineEnabled = useFeature('STATE_ENABLED');
@@ -180,6 +185,71 @@ export default function CommandCenterPage() {
                 <div className="text-3xl font-mono text-green-400 tabular-nums glow-text">
                   {currentTime.toLocaleTimeString('en-US', { hour12: false })}
                 </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Interactive Metrics Dashboard */}
+          <div className="bg-black/60 border-b-2 border-green-900/40 p-6">
+            <div className="max-w-[2000px] mx-auto">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <InteractiveMetric
+                  label="ACTIVE SIGNALS"
+                  value={feed.length}
+                  trend="up"
+                  trendValue="+12 last hour"
+                  color="green"
+                  icon={<Activity className="w-5 h-5" />}
+                  description="Real-time intelligence from verified sources"
+                  details={[
+                    { label: 'Military', value: feed.filter(i => i.tags?.includes('military')).length.toString() },
+                    { label: 'Political', value: feed.filter(i => i.tags?.includes('politics')).length.toString() },
+                    { label: 'High Priority', value: feed.filter(i => i.reliability >= 4).length.toString() },
+                  ]}
+                />
+
+                <InteractiveMetric
+                  label="GLOBAL TENSION"
+                  value={scenarios.length > 0 ? Math.round(scenarios[0]?.probability * 100) + '%' : '—'}
+                  trend={scenarios.length > 0 && scenarios[0]?.probability > 0.6 ? 'up' : 'stable'}
+                  trendValue="DEFCON 3"
+                  color="yellow"
+                  icon={<Globe className="w-5 h-5" />}
+                  description="Calculated from active scenario probabilities"
+                  details={[
+                    { label: 'Critical Scenarios', value: scenarios.filter(s => s.probability > 0.8).length.toString() },
+                    { label: 'Total Scenarios', value: scenarios.length.toString() },
+                    { label: 'Alert Level', value: 'ELEVATED' },
+                  ]}
+                />
+
+                <InteractiveMetric
+                  label="THREAT VECTORS"
+                  value={aggression.length}
+                  trend="up"
+                  trendValue="+2 active"
+                  color="red"
+                  icon={<AlertTriangle className="w-5 h-5" />}
+                  description="Active state-to-state tensions"
+                  details={aggression.slice(0, 3).map(a => ({
+                    label: `${a.country} → ${a.target}`,
+                    value: `${a.score}%`
+                  }))}
+                />
+
+                <InteractiveMetric
+                  label="SOURCE RELIABILITY"
+                  value={feed.length > 0 ? ((feed.reduce((sum, i) => sum + i.reliability, 0) / feed.length) * 20).toFixed(0) + '%' : '—'}
+                  trend="stable"
+                  color="blue"
+                  icon={<Shield className="w-5 h-5" />}
+                  description="Average source credibility score"
+                  details={[
+                    { label: 'Verified Sources', value: feed.filter(i => i.reliability >= 4).length.toString() },
+                    { label: 'Total Sources', value: new Set(feed.map(i => i.source_name)).size.toString() },
+                    { label: 'Coverage', value: '24/7' },
+                  ]}
+                />
               </div>
             </div>
           </div>
@@ -357,7 +427,8 @@ export default function CommandCenterPage() {
                   return (
                     <div
                       key={item.id}
-                      className="bg-black/60 border border-blue-900/40 hover:border-blue-500/60 p-4 transition-colors"
+                      onClick={() => setSelectedNews(item)}
+                      className="bg-black/60 border border-blue-900/40 hover:border-blue-500/60 hover:bg-blue-900/20 p-4 transition-all cursor-pointer group hover:scale-102 hover:shadow-lg hover:shadow-blue-500/20"
                     >
                       <div className="flex items-start justify-between mb-2">
                         <div className="flex-1">
@@ -519,6 +590,14 @@ export default function CommandCenterPage() {
           target={evidenceDrawer.target}
           title={evidenceDrawer.title}
         />
+
+        {/* News Detail Popup */}
+        {selectedNews && (
+          <NewsDetailPopup
+            news={selectedNews}
+            onClose={() => setSelectedNews(null)}
+          />
+        )}
       </div>
 
       <style jsx global>{`
