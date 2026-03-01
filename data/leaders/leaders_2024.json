@@ -1,0 +1,258 @@
+[
+  {
+    "id": "usa_trump",
+    "displayName": "Donald Trump",
+    "country": "United States",
+    "role": "Commander",
+    "yearLabel": "2024",
+    "image": "/leaders/trump.png",
+    "theme": {
+      "ring": "#00ff88",
+      "glow": "rgba(0,255,136,0.55)",
+      "accent": "#00ff88"
+    },
+    "stats": {
+      "readiness": 85,
+      "stance": "aggressive"
+    },
+    "meta": {
+      "lastVerifiedAt": "2024-11-01",
+      "source": "Character art pack (demo)",
+      "displayPolicy": "Use neutral public labels; show verified dates in tooltip."
+    },
+    "note": "UI label uses neutral role naming to avoid asserting current office beyond verified dates.",
+    "labels": {
+      "rolePublic": "Commander",
+      "roleTooltip": "Commander",
+      "titlePublic": "Commander",
+      "titleTooltip": "Public figure / head of government (verify in-app)",
+      "countryLabel": "United States",
+      "yearLabel": "2024"
+    },
+    "displayNameShort": "Trump"
+  },
+  {
+    "id": "ru_putin",
+    "displayName": "Vladimir Putin",
+    "country": "Russia",
+    "role": "Commander",
+    "yearLabel": "2024",
+    "image": "/leaders/putin.png",
+    "theme": {
+      "ring": "#ff3b30",
+      "glow": "rgba(255,59,48,0.55)",
+      "accent": "#ff3b30"
+    },
+    "stats": {
+      "readiness": 88,
+      "stance": "aggressive"
+    },
+    "meta": {
+      "lastVerifiedAt": "2024-11-01",
+      "source": "Character art pack (demo)",
+      "displayPolicy": "Use neutral public labels; show verified dates in tooltip."
+    },
+    "note": "UI label uses neutral role naming to avoid asserting current office beyond verified dates.",
+    "labels": {
+      "rolePublic": "Commander",
+      "roleTooltip": "Commander",
+      "titlePublic": "Commander",
+      "titleTooltip": "Public figure / head of government (verify in-app)",
+      "countryLabel": "Russia",
+      "yearLabel": "2024"
+    },
+    "displayNameShort": "Putin"
+  },
+  {
+    "id": "cn_xi",
+    "displayName": "Xi Jinping",
+    "country": "China",
+    "role": "Commander",
+    "yearLabel": "2024",
+    "image": "/leaders/xi.png",
+    "theme": {
+      "ring": "#ff2d55",
+      "glow": "rgba(255,45,85,0.55)",
+      "accent": "#ff2d55"
+    },
+    "stats": {
+      "readiness": 80,
+      "stance": "neutral"
+    },
+    "meta": {
+      "lastVerifiedAt": "2024-11-01",
+      "source": "Character art pack (demo)",
+      "displayPolicy": "Use neutral public labels; show verified dates in tooltip."
+    },
+    "note": "UI label uses neutral role naming to avoid asserting current office beyond verified dates.",
+    "labels": {
+      "rolePublic": "Commander",
+      "roleTooltip": "Commander",
+      "titlePublic": "Commander",
+      "titleTooltip": "Public figure / head of government (verify in-app)",
+      "countryLabel": "China",
+      "yearLabel": "2024"
+    },
+    "displayNameShort": "Jinping"
+  },
+  {
+    "id": "ua_zelenskyy",
+    "displayName": "Volodymyr Zelenskyy",
+    "country": "Ukraine",
+    "role": "Commander",
+    "yearLabel": "2024",
+    "image": "/leaders/zelenskyy.png",
+    "theme": {
+      "ring": "#0a84ff",
+      "glow": "rgba(10,132,255,0.55)",
+      "accent": "#0a84ff"
+    },
+    "stats": {
+      "readiness": 75,
+      "stance": "defensive"
+    },
+    "meta": {
+      "lastVerifiedAt": "2024-11-01",
+      "source": "Character art pack (demo)",
+      "displayPolicy": "Use neutral public labels; show verified dates in tooltip."
+    },
+    "note": "UI label uses neutral role naming to avoid asserting current office beyond verified dates.",
+    "labels": {
+      "rolePublic": "Commander",
+      "roleTooltip": "Commander",
+      "titlePublic": "Commander",
+      "titleTooltip": "Public figure / head of government (verify in-app)",
+      "countryLabel": "Ukraine",
+      "yearLabel": "2024"
+    },
+    "displayNameShort": "Zelenskyy"
+  },
+  {
+    "id": "il_netanyahu",
+    "displayName": "Benjamin Netanyahu",
+    "country": "Israel",
+    "role": "Commander",
+    "yearLabel": "2024",
+    "image": "/leaders/netanyahu.png",
+    "theme": {
+      "ring": "#64d2ff",
+      "glow": "rgba(100,210,255,0.55)",
+      "accent": "#64d2ff"
+    },
+    "stats": {
+      "readiness": 78,
+      "stance": "aggressive"
+    },
+    "meta": {
+      "lastVerifiedAt": "2024-11-01",
+      "source": "Character art pack (demo)",
+      "displayPolicy": "Use neutral public labels; show verified dates in tooltip."
+    },
+    "note": "UI label uses neutral role naming to avoid asserting current office beyond verified dates.",
+    "labels": {
+      "rolePublic": "Commander",
+      "roleTooltip": "Commander",
+      "titlePublic": "Commander",
+      "titleTooltip": "Public figure / head of government (verify in-app)",
+      "countryLabel": "Israel",
+      "yearLabel": "2024"
+    },
+    "displayNameShort": "Netanyahu"
+  },
+  {
+    "id": "ir_khamenei",
+    "displayName": "Ali Khamenei",
+    "country": "Iran",
+    "role": "Commander",
+    "yearLabel": "2024",
+    "image": "/leaders/khamenei.png",
+    "theme": {
+      "ring": "#30d158",
+      "glow": "rgba(48,209,88,0.55)",
+      "accent": "#30d158"
+    },
+    "stats": {
+      "readiness": 82,
+      "stance": "aggressive"
+    },
+    "meta": {
+      "lastVerifiedAt": "2024-11-01",
+      "source": "Character art pack (demo)",
+      "displayPolicy": "Use neutral public labels; show verified dates in tooltip."
+    },
+    "note": "UI label uses neutral role naming to avoid asserting current office beyond verified dates.",
+    "labels": {
+      "rolePublic": "Commander",
+      "roleTooltip": "Supreme Leader",
+      "titlePublic": "Commander",
+      "titleTooltip": "Supreme Leader (religious-political authority)",
+      "countryLabel": "Iran",
+      "yearLabel": "2024"
+    },
+    "displayNameShort": "Khamenei"
+  },
+  {
+    "id": "kp_kim",
+    "displayName": "Kim Jong-un",
+    "country": "North Korea",
+    "role": "Commander",
+    "yearLabel": "2024",
+    "image": "/leaders/kim.png",
+    "theme": {
+      "ring": "#ff453a",
+      "glow": "rgba(255,69,58,0.55)",
+      "accent": "#ff453a"
+    },
+    "stats": {
+      "readiness": 90,
+      "stance": "aggressive"
+    },
+    "meta": {
+      "lastVerifiedAt": "2024-11-01",
+      "source": "Character art pack (demo)",
+      "displayPolicy": "Use neutral public labels; show verified dates in tooltip."
+    },
+    "note": "UI label uses neutral role naming to avoid asserting current office beyond verified dates.",
+    "labels": {
+      "rolePublic": "Commander",
+      "roleTooltip": "Supreme Leader",
+      "titlePublic": "Commander",
+      "titleTooltip": "Supreme Leader",
+      "countryLabel": "North Korea",
+      "yearLabel": "2024"
+    },
+    "displayNameShort": "Jong-un"
+  },
+  {
+    "id": "tr_erdogan",
+    "displayName": "Recep Tayyip Erdoğan",
+    "country": "Turkey",
+    "role": "Commander",
+    "yearLabel": "2024",
+    "image": "/leaders/erdogan.png",
+    "theme": {
+      "ring": "#ff453a",
+      "glow": "rgba(255,69,58,0.45)",
+      "accent": "#ff453a"
+    },
+    "stats": {
+      "readiness": 76,
+      "stance": "neutral"
+    },
+    "meta": {
+      "lastVerifiedAt": "2024-11-01",
+      "source": "Character art pack (demo)",
+      "displayPolicy": "Use neutral public labels; show verified dates in tooltip."
+    },
+    "note": "UI label uses neutral role naming to avoid asserting current office beyond verified dates.",
+    "labels": {
+      "rolePublic": "Commander",
+      "roleTooltip": "Commander",
+      "titlePublic": "Commander",
+      "titleTooltip": "Public figure / head of government (verify in-app)",
+      "countryLabel": "Turkey",
+      "yearLabel": "2024"
+    },
+    "displayNameShort": "Erdoğan"
+  }
+]

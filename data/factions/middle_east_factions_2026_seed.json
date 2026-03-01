@@ -1,0 +1,170 @@
+[
+  {
+    "id": "israel",
+    "name": "Israel",
+    "type": "country",
+    "region": "Middle East",
+    "status": "state",
+    "notes": "Key actor in Israel-Palestine conflict."
+  },
+  {
+    "id": "palestine_west_bank",
+    "name": "Palestinian Territories (West Bank)",
+    "type": "territory",
+    "region": "Middle East",
+    "status": "territory",
+    "notes": "Palestinian Authority-administered areas (varies by zone)."
+  },
+  {
+    "id": "palestine_gaza",
+    "name": "Gaza Strip",
+    "type": "territory",
+    "region": "Middle East",
+    "status": "territory",
+    "notes": "Densely populated enclave; governance disputed/varies by period."
+  },
+  {
+    "id": "lebanon",
+    "name": "Lebanon",
+    "type": "country",
+    "region": "Middle East",
+    "status": "state",
+    "notes": "Border tensions and internal factions."
+  },
+  {
+    "id": "syria",
+    "name": "Syria",
+    "type": "country",
+    "region": "Middle East",
+    "status": "state",
+    "notes": "Ongoing fragmentation and external involvement."
+  },
+  {
+    "id": "iraq",
+    "name": "Iraq",
+    "type": "country",
+    "region": "Middle East",
+    "status": "state",
+    "notes": "Security, militia dynamics, and regional spillover."
+  },
+  {
+    "id": "iran",
+    "name": "Iran",
+    "type": "country",
+    "region": "Middle East",
+    "status": "state",
+    "notes": "Regional power; proxy network influences multiple theaters."
+  },
+  {
+    "id": "yemen",
+    "name": "Yemen",
+    "type": "country",
+    "region": "Middle East",
+    "status": "state",
+    "notes": "Fragmented conflict; Red Sea shipping implications."
+  },
+  {
+    "id": "saudi_arabia",
+    "name": "Saudi Arabia",
+    "type": "country",
+    "region": "Middle East",
+    "status": "state",
+    "notes": "Regional power; security and diplomacy."
+  },
+  {
+    "id": "uae",
+    "name": "United Arab Emirates",
+    "type": "country",
+    "region": "Middle East",
+    "status": "state",
+    "notes": "Regional actor; diplomacy and security posture."
+  },
+  {
+    "id": "qatar",
+    "name": "Qatar",
+    "type": "country",
+    "region": "Middle East",
+    "status": "state",
+    "notes": "Diplomatic mediator roles at times."
+  },
+  {
+    "id": "jordan",
+    "name": "Jordan",
+    "type": "country",
+    "region": "Middle East",
+    "status": "state",
+    "notes": "Border security + refugee pressures."
+  },
+  {
+    "id": "egypt",
+    "name": "Egypt",
+    "type": "country",
+    "region": "Middle East",
+    "status": "state",
+    "notes": "Gaza border and regional diplomacy."
+  },
+  {
+    "id": "turkey",
+    "name": "Turkey",
+    "type": "country",
+    "region": "Middle East",
+    "status": "state",
+    "notes": "Regional military footprint; Syria/Iraq dynamics."
+  },
+  {
+    "id": "kuwait",
+    "name": "Kuwait",
+    "type": "country",
+    "region": "Middle East",
+    "status": "state",
+    "notes": "Gulf security and energy corridors."
+  },
+  {
+    "id": "bahrain",
+    "name": "Bahrain",
+    "type": "country",
+    "region": "Middle East",
+    "status": "state",
+    "notes": "Gulf security architecture."
+  },
+  {
+    "id": "oman",
+    "name": "Oman",
+    "type": "country",
+    "region": "Middle East",
+    "status": "state",
+    "notes": "Often plays mediator role."
+  },
+  {
+    "id": "golan_heights",
+    "name": "Golan Heights",
+    "type": "territory",
+    "region": "Middle East",
+    "status": "disputed",
+    "notes": "Disputed territory; strategic high ground."
+  },
+  {
+    "id": "kurdis_region_iraq",
+    "name": "Kurdistan Region (Iraq)",
+    "type": "region",
+    "region": "Middle East",
+    "status": "autonomous_region",
+    "notes": "Autonomous region with distinct security forces (Peshmerga)."
+  },
+  {
+    "id": "rojava_sdf",
+    "name": "NE Syria (SDF-controlled areas)",
+    "type": "region",
+    "region": "Middle East",
+    "status": "de_facto",
+    "notes": "De facto control varies; conflict spillover risk."
+  },
+  {
+    "id": "red_sea_shipping",
+    "name": "Red Sea / Bab el-Mandeb",
+    "type": "maritime_zone",
+    "region": "Middle East",
+    "status": "strategic_chokepoint",
+    "notes": "Shipping lane impacted by regional conflict dynamics."
+  }
+]
