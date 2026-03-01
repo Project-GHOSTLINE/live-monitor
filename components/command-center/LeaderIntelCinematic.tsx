@@ -107,10 +107,10 @@ export function LeaderIntelCinematic({
 
   // Conditional styles based on mode
   const containerClassName = mode === 'floating'
-    ? `fixed z-[9999] w-[380px] h-[420px] bg-black/98 border-2 border-green-500 rounded-lg shadow-2xl shadow-green-500/50 font-mono text-xs overflow-hidden transition-all duration-150 ease-out origin-left ${
+    ? `fixed z-[9999] w-[380px] h-[480px] bg-black/98 border-2 border-green-500 rounded-lg shadow-2xl shadow-green-500/50 font-mono text-xs overflow-hidden transition-all duration-150 ease-out origin-left ${
         isAnimating ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
       }`
-    : 'relative w-full max-w-[420px] h-[420px] bg-black/98 border-2 border-green-500 rounded-lg shadow-2xl shadow-green-500/50 font-mono text-xs overflow-hidden';
+    : 'relative w-full max-w-[420px] h-[480px] bg-black/98 border-2 border-green-500 rounded-lg shadow-2xl shadow-green-500/50 font-mono text-xs overflow-hidden';
 
   const containerStyle = mode === 'floating'
     ? {
@@ -269,28 +269,61 @@ export function LeaderIntelCinematic({
             </div>
           </div>
 
-          {/* Active Incidents */}
+          {/* Active Incidents - Showing 5 latest */}
           <div className="border border-green-500/30 rounded p-2 bg-gradient-to-br from-green-950/20 to-black/20">
-            <h4 className="text-green-400 font-bold mb-1.5 text-[10px] tracking-wider uppercase">
-              ▸ Active Incidents
-            </h4>
-            <div className="space-y-1">
-              {pulse?.latest_items.slice(0, 3).map((item, idx) => (
-                <div
+            <div className="flex items-center justify-between mb-1.5">
+              <h4 className="text-green-400 font-bold text-[10px] tracking-wider uppercase">
+                ▸ Active Incidents
+              </h4>
+              {pulse && pulse.latest_items.length > 0 && (
+                <span className="text-green-500/60 text-[8px] font-mono">
+                  {pulse.latest_items.length}/{pulse.events_6h_count} shown
+                </span>
+              )}
+            </div>
+            <div className="space-y-1.5 max-h-[180px] overflow-y-auto scrollbar-thin scrollbar-thumb-green-500/30 scrollbar-track-transparent">
+              {pulse?.latest_items.slice(0, 5).map((item, idx) => (
+                <a
                   key={idx}
-                  className="flex items-start gap-1.5 text-[10px] cursor-pointer hover:bg-green-500/10 bg-black/20 p-1 rounded transition-colors"
-                  onClick={() => onIncidentClick?.(String(idx))}
+                  href={item.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block cursor-pointer hover:bg-green-500/10 bg-black/20 p-1.5 rounded transition-colors border border-green-500/10 hover:border-green-500/30"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    window.open(item.url, '_blank', 'noopener,noreferrer');
+                    onIncidentClick?.(String(idx));
+                  }}
                 >
-                  <span className="text-red-400 flex-shrink-0">⚡</span>
-                  <span className="text-green-200 line-clamp-1 flex-1" style={{ textShadow: '0 0 4px rgba(34,197,94,0.4)' }}>
-                    {item.title}
-                  </span>
-                  <span className="text-green-500/60 flex-shrink-0 font-mono">
-                    {formatTime(item.time)}
-                  </span>
-                </div>
+                  <div className="flex items-start gap-1.5 mb-0.5">
+                    <span className="text-red-400 flex-shrink-0 mt-0.5">⚡</span>
+                    <div className="flex-1 min-w-0">
+                      <h5 className="text-green-200 font-bold text-[11px] leading-tight mb-0.5" style={{ textShadow: '0 0 4px rgba(34,197,94,0.4)' }}>
+                        {item.title}
+                      </h5>
+                      {item.description && (
+                        <p className="text-green-500/70 text-[9px] leading-snug line-clamp-2">
+                          {item.description}
+                        </p>
+                      )}
+                    </div>
+                    <span className="text-green-500/60 flex-shrink-0 font-mono text-[9px]">
+                      {formatTime(item.time)}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1 ml-5 mt-0.5">
+                    <span className="text-green-500/40 text-[8px]">
+                      {item.source}
+                    </span>
+                    {item.tags && item.tags.length > 0 && (
+                      <span className="text-green-500/30 text-[8px]">
+                        • {item.tags.slice(0, 2).join(', ')}
+                      </span>
+                    )}
+                  </div>
+                </a>
               )) || (
-                <div className="text-green-500/40 text-center py-1 text-[10px]">
+                <div className="text-green-500/40 text-center py-2 text-[10px]">
                   No recent incidents
                 </div>
               )}

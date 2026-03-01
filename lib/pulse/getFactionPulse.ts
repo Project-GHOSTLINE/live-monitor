@@ -13,6 +13,7 @@ export interface FactionPulse {
   };
   latest_items: Array<{
     title: string;
+    description?: string;
     source: string;
     time: number;
     url: string;
@@ -88,8 +89,9 @@ export async function getFactionPulse(
       events_6h_count: items6h.length,
       events_24h_count: items24h.length,
       severity_breakdown: severity,
-      latest_items: items6h.slice(0, 3).map((item: any) => ({
+      latest_items: items6h.slice(0, 5).map((item: any) => ({
         title: item.title_en || item.title_original,
+        description: item.summary_en || item.content_original?.substring(0, 150),
         source: item.source_name,
         time: item.published_at,
         url: item.canonical_url || item.source_url,
