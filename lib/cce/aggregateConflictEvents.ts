@@ -17,7 +17,7 @@
  */
 
 import { getDB } from '../db/adapter';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 
 const SIX_HOURS = 6 * 60 * 60; // 6 hours in seconds
 
@@ -245,7 +245,7 @@ export async function aggregateConflictEvents(options?: {
 
     // Create conflict_event
     const conflictEvent: ConflictEvent = {
-      id: uuidv4(),
+      id: randomUUID(),
       conflict_id,
       window_start: bucket_start,
       window_end: bucket_start + SIX_HOURS,
