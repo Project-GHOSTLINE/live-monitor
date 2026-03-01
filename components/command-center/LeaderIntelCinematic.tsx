@@ -41,6 +41,29 @@ export function LeaderIntelCinematic({
   const [currentTime, setCurrentTime] = useState<number>(0);
   const [isAnimating, setIsAnimating] = useState<boolean>(false);
 
+  // Check if UI Cinematic is enabled
+  const uiCinematicEnabled = process.env.NEXT_PUBLIC_UI_CINEMATIC_ENABLED === 'true';
+
+  // Fallback: Simple card if feature disabled
+  if (!uiCinematicEnabled) {
+    return (
+      <div
+        className={mode === 'floating' ? 'fixed z-[9999]' : 'relative'}
+        style={mode === 'floating' ? { left: anchorRect.x, top: anchorRect.y } : undefined}
+      >
+        <div className="w-[320px] bg-black/90 border-2 border-green-500 rounded-lg p-4 font-mono">
+          <h3 className="text-green-400 text-lg font-bold mb-2">{leaderName}</h3>
+          <div className="text-green-300 text-sm">Readiness: {readinessScore}%</div>
+          {pulse && (
+            <div className="text-green-500/70 text-xs mt-2">
+              {pulse.events_6h_count} events in 6h
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   // Set current time on client only to prevent hydration mismatch
   useEffect(() => {
     setCurrentTime(Math.floor(Date.now() / 1000));
@@ -99,19 +122,55 @@ export function LeaderIntelCinematic({
     : 0;
   const confidence = pulse ? pulse.confidence_score * 100 : 0;
 
-  // Relations data (mock - replace with actual data)
-  const relations = [
-    { code: 'US', heat: 85, delta: 5 },
-    { code: 'RU', heat: 45, delta: -3 },
-    { code: 'CN', heat: 30, delta: 0 },
-  ].slice(0, 3);
+  // CCE v2: Fetch active conflicts involving this country
+  const [conflicts, setConflicts] = useState<Array<{
+    actor_a: string;
+    actor_b: string;
+    pressure: number;
+    momentum: number;
+    tension: number;
+  }>>([]);
+
+  useEffect(() => {
+    if (!leaderId) return;
+
+    // Only fetch if CCE v2 is enabled
+    const cceV2Enabled = process.env.NEXT_PUBLIC_CCE_V2_ENABLED === 'true';
+    if (!cceV2Enabled) {
+      setConflicts([]);
+      return;
+    }
+
+    fetch('/api/cce/conflicts/top?limit=20&metric=pressure')
+      .then(res => res.json())
+      .then(data => {
+        if (data.conflicts) {
+          // Filter conflicts involving this country (leaderId)
+          const relevant = data.conflicts
+            .filter((c: any) => c.actor_a === leaderId || c.actor_b === leaderId)
+            .slice(0, 3)
+            .map((c: any) => ({
+              actor_a: c.actor_a,
+              actor_b: c.actor_b,
+              pressure: c.pressure || 0,
+              momentum: c.momentum || 0,
+              tension: c.tension || 0,
+            }));
+          setConflicts(relevant);
+        }
+      })
+      .catch(err => {
+        console.error('Failed to fetch conflicts:', err);
+        setConflicts([]);
+      });
+  }, [leaderId]);
 
   // Conditional styles based on mode
   const containerClassName = mode === 'floating'
-    ? `fixed z-[9999] w-[380px] h-[520px] bg-black/98 border-2 border-green-500 rounded-lg shadow-2xl shadow-green-500/50 font-mono text-xs overflow-hidden transition-all duration-150 ease-out origin-left ${
+    ? `fixed z-[9999] w-[380px] h-[520px] bg-black/90 border-2 border-green-500 rounded-lg shadow-2xl shadow-green-500/50 font-mono text-xs overflow-hidden transition-all duration-150 ease-out origin-left ${
         isAnimating ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
       }`
-    : 'relative w-full max-w-[420px] h-[520px] bg-black/98 border-2 border-green-500 rounded-lg shadow-2xl shadow-green-500/50 font-mono text-xs overflow-hidden';
+    : 'relative w-full max-w-[420px] h-[520px] bg-black/90 border-2 border-green-500 rounded-lg shadow-2xl shadow-green-500/50 font-mono text-xs overflow-hidden';
 
   const containerStyle = mode === 'floating'
     ? {
@@ -125,20 +184,20 @@ export function LeaderIntelCinematic({
       className={containerClassName}
       style={containerStyle}
     >
-      {/* Scanlines overlay */}
+      {/* Scanlines overlay - behind content */}
       <div
-        className="absolute inset-0 pointer-events-none opacity-5 z-10"
+        className="absolute inset-0 pointer-events-none opacity-5 z-0"
         style={{
           background: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,255,136,0.15) 3px)',
         }}
       />
 
       {/* Header */}
-      <div className="relative border-b border-green-500/40 p-2.5 bg-gradient-to-r from-green-950/40 to-transparent">
+      <div className="relative z-10 border-b border-green-500/40 p-2.5 bg-gradient-to-r from-green-950/40 to-transparent">
         <div className="flex items-center justify-between">
           <div>
             <div className="text-green-500/60 text-[8px] tracking-widest uppercase">TACTICAL INTEL</div>
-            <h3 className="text-green-400 text-sm font-bold tracking-wide mt-0.5" style={{ textShadow: '0 0 8px rgba(34,197,94,0.8)' }}>
+            <h3 className="text-green-400 text-sm font-bold tracking-wide mt-0.5 relative z-20" style={{ textShadow: '0 0 8px rgba(34,197,94,0.8)' }}>
               {leaderName}
             </h3>
           </div>
@@ -167,7 +226,7 @@ export function LeaderIntelCinematic({
       </div>
 
       {/* 2-Column Layout: LEFT (Radar 160px) + RIGHT (Bars, Incidents, Relations 200px) */}
-      <div className="relative p-3 flex gap-3">
+      <div className="relative z-10 p-3 flex gap-3">
         {/* LEFT COLUMN: Radar (160px) */}
         <div className="w-[160px] flex-shrink-0">
           <div className="relative w-full h-[160px]">
@@ -369,29 +428,60 @@ export function LeaderIntelCinematic({
             </div>
           </div>
 
-          {/* Relations Mini List */}
+          {/* Active Conflicts (CCE v2) */}
           <div className="border border-green-500/30 rounded p-2 bg-gradient-to-br from-green-950/20 to-black/20">
             <h4 className="text-green-400 font-bold mb-1.5 text-[10px] tracking-wider uppercase">
-              ▸ Relations
+              ▸ Active Conflicts
             </h4>
             <div className="space-y-1.5">
-              {relations.map((rel, idx) => (
-                <div key={idx} className="flex items-center gap-2 text-[10px]">
-                  <span className="text-green-400 font-bold w-6">{rel.code}</span>
-                  <div className="flex-1 h-1.5 bg-black/60 rounded overflow-hidden border border-green-500/30">
-                    <div
-                      className="h-full bg-gradient-to-r from-green-600 to-green-400"
-                      style={{
-                        width: `${rel.heat}%`,
-                        boxShadow: '0 0 4px rgba(34,197,94,0.5)',
-                      }}
-                    />
-                  </div>
-                  <span className={`font-mono font-bold w-7 text-right ${rel.delta > 0 ? 'text-red-400' : rel.delta < 0 ? 'text-green-600' : 'text-green-500/60'}`}>
-                    {rel.delta !== 0 ? `${rel.delta > 0 ? '+' : ''}${rel.delta}` : '—'}
-                  </span>
+              {conflicts.length > 0 ? (
+                conflicts.map((conflict, idx) => {
+                  const opponent = conflict.actor_a === leaderId ? conflict.actor_b : conflict.actor_a;
+                  const pressurePercent = Math.round(conflict.pressure * 100);
+                  const momentumPercent = Math.round(conflict.momentum * 100);
+
+                  return (
+                    <div key={idx} className="bg-black/20 p-1.5 rounded border border-green-500/20">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-green-400 font-bold text-[10px]">vs {opponent}</span>
+                        <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded ${
+                          pressurePercent >= 80 ? 'bg-red-500/20 text-red-400' :
+                          pressurePercent >= 60 ? 'bg-orange-500/20 text-orange-400' :
+                          'bg-yellow-500/20 text-yellow-400'
+                        }`}>
+                          {pressurePercent}% PRESSURE
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 text-[9px]">
+                        <span className="text-green-500/60 w-12">Momentum</span>
+                        <div className="flex-1 h-1 bg-black/60 rounded overflow-hidden border border-green-500/30">
+                          <div
+                            className={`h-full ${
+                              momentumPercent >= 50 ? 'bg-gradient-to-r from-red-600 to-red-400' :
+                              momentumPercent >= 30 ? 'bg-gradient-to-r from-orange-600 to-orange-400' :
+                              'bg-gradient-to-r from-yellow-600 to-yellow-400'
+                            }`}
+                            style={{
+                              width: `${momentumPercent}%`,
+                              boxShadow: momentumPercent >= 50 ? '0 0 4px rgba(239,68,68,0.6)' : '0 0 4px rgba(251,146,60,0.5)',
+                            }}
+                          />
+                        </div>
+                        <span className="text-green-400 font-mono font-bold w-8 text-right">
+                          {momentumPercent >= 40 ? '↗' : momentumPercent >= 20 ? '→' : '↘'}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="text-green-500/40 text-center py-2 text-[9px]">
+                  {process.env.NEXT_PUBLIC_CCE_V2_ENABLED === 'true'
+                    ? 'No active conflicts'
+                    : 'Enable CCE v2 for conflict data'
+                  }
                 </div>
-              ))}
+              )}
             </div>
           </div>
         </div>
